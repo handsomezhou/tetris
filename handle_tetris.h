@@ -1,0 +1,4 @@
+#ifndef HANDLE_TETRIS_H
+#define HANDLE_TETRIS_H
+
+#endif	/*HANDLE_TETRIS_H*/
