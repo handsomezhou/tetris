@@ -105,7 +105,7 @@ void exit_screen();
 int init_tetris(tetris_t **tetris)
 {
 	tetris_t **ttrs=tetris;
-	//int ret;
+	int ret;
 	
 	if(NULL!=ttrs){
 		exit_tetris(*ttrs);
@@ -118,6 +118,8 @@ int init_tetris(tetris_t **tetris)
 			break;
 		}	
 
+		ret=init_screen(&(*ttrs)->scr);
+		
 	}while(0);
 	
 	return TTRS_FAILED;
@@ -136,6 +138,9 @@ void exit_tetris(tetris_t *tetris)
 int init_screen(screen_t *screen)
 {
 	screen_t *scr=screen;
+	int max_y;
+	int max_x;
+	
 	if(NULL==scr){
 		return TTRS_FAILED;
 	}
@@ -155,7 +160,13 @@ int init_screen(screen_t *screen)
 		init_pair(BLOCK_Z,COLOR_MAGENTA,COLOR_BLACK);
 		init_pair(BLOCK_T,COLOR_BLACK,COLOR_BLACK);
 	}
-
+	getmaxyx(stdscr,max_y,max_x);
+	scr->win=stdscr;
+	scr->nlines=SCREEN_HEIGHT;
+	scr->ncols=SCREEN_WIDTH;
+	scr->begin_y=(max_y-scr->nlines)/2;
+	scr->begin_x=(max_x-scr->ncols)/2;
+	
 	return TTRS_SUCCESS;
 }
 
