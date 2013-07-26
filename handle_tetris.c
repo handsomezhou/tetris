@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "handle_tetris.h"
 
 static block_t get_block_from_num(int num);
@@ -196,5 +197,40 @@ block_t *current_block(const screen_t *screen,block_t *current,const block_t *ne
 	cur->x=POS_CURRENT_BLOCK_X;
 	
 	return cur;
+}
+
+int handle_tetris(tetris_t *tetris)
+{
+	tetris_t *ttrs=tetris;
+	int ch=-1;
+	MEVENT mevent;
+	
+	if(NULL==ttrs){
+		return TTRS_FAILED;
+	}
+	
+	//deal with key and mouse event
+	mousemask(ALL_MOUSE_EVENTS,NULL);
+	ch=wgetch(ttrs->scr.win);
+	if(-1==ch){//no key and mouse event
+		if(KEY_MOUSE==ch){
+			if(getmouse(&mevent)==OK){
+					
+			}else{
+
+			}
+		}else{
+			
+		}
+	}
+	
+	usleep(1000000);
+	//just for test
+	ttrs->prompt.level_value++;
+	ttrs->prompt.lines_value +=2;
+	ttrs->prompt.score_value +=3;
+	
+	ttrs->cur_block.y++;
+	return TTRS_SUCCESS;
 }
 

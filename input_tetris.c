@@ -6,5 +6,7 @@ int input_tetris(tetris_t *tetris)
 	if(NULL==ttrs){
 		return TTRS_FAILED;
 	}
+
+	return TTRS_SUCCESS;
 }
 
