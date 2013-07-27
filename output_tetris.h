@@ -1,3 +1,7 @@
+/**
+  *  Copyright (C) 2013  Handsome Zhou
+  */
+
 #ifndef OUTPUT_TETRIS_H
 #define OUTPUT_TETRIS_H
 

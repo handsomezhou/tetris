@@ -1,3 +1,7 @@
+/**
+  *  Copyright (C) 2013  Handsome Zhou
+  */
+
 #ifndef TETRIS_H
 #define TETRIS_H
 #include <ncurses.h>
@@ -17,6 +21,8 @@
 
 #define BLOCK_ERROR_TYPE	-1
 #define BLOCK_ERROR_NUM		-1
+
+#define BLOCK_INIT_VALUE	'0'
 
 
 #define TTRS_SUCCESS	0
@@ -93,6 +99,9 @@
 #define BLOCK_Z_START_NUM	(BLOCK_S_START_NUM+BLOCK_S_NUM)
 #define BLOCK_T_START_NUM	(BLOCK_Z_START_NUM+BLOCK_Z_NUM)
 
+#define KEY_ESC			27
+#define MIN_UNIT_TIME	100000 //us
+
 #define TRUE	1
 #define FALSE	0
 typedef int BOOL;
@@ -122,8 +131,7 @@ typedef struct prompt{
 	char start[LEN_START_STR];
 	char pause[LEN_PAUSE_STR];
 	char quit[LEN_QUIT_STR];
-
-	char title[];
+	char title[LEN_TITLE_STR];
 }prompt_t;
 
 typedef enum block_type{
@@ -134,7 +142,7 @@ typedef enum block_type{
 	BLOCK_S,
 	BLOCK_Z,
 	BLOCK_T,
-	BLOCK_NONE,
+	BLOCK_TYPE_NONE,
 }block_type_t;	//Tetris block type
 
 typedef enum color{
@@ -159,6 +167,7 @@ typedef struct grid{
 	int y;
 	int x;		//Grid coordinates
 	block_type_t type;	//Grid belongs to which block,used to set the grid color
+	char value;			//'1' or '0','1' indicates block,'0' indicates no block in this position
 }grid_t;
 
 typedef struct block{
@@ -176,6 +185,12 @@ typedef enum status{
 	STATUS_QUIT,
 }status_t;
 
+typedef enum event{
+	EVENT_KEY,
+	EVENT_MOUSE,
+	EVENT_NONE,
+}event_t;
+
 typedef struct tetris{
 	screen_t scr;
 	prompt_t prompt;
@@ -183,6 +198,8 @@ typedef struct tetris{
 	block_t cur_block;
 	block_t next_block;
 	status_t status;
+	event_t event;
+	unsigned int min_unit_time;
 }tetris_t;
 
 extern char blck[BLOCK_TOTAL_NUM][GRID_LEN*GRID_LEN+1];

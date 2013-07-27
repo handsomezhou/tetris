@@ -1,3 +1,7 @@
+/**
+  *  Copyright (C) 2013  Handsome Zhou
+  */
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -146,6 +150,8 @@ int init_tetris(tetris_t **tetris)
 		current_block(&(*ttrs)->scr,&(*ttrs)->cur_block,&(*ttrs)->next_block);
 
 		(*ttrs)->status=STATUS_INIT;
+		(*ttrs)->event=EVENT_NONE;
+		(*ttrs)->min_unit_time=MIN_UNIT_TIME;
 		
 		return TTRS_SUCCESS;
 		
@@ -179,7 +185,9 @@ static int init_screen(screen_t *screen)
 	//init ncurses
 	initscr();
 	cbreak();
-	curs_set(FALSE);
+
+	//just for test
+	curs_set(TRUE);
 	clear();
 	if(has_colors()){
 		start_color();
@@ -208,6 +216,7 @@ static int init_screen(screen_t *screen)
 	scr->begin_y=(max_y-scr->nlines)/2;
 	scr->begin_x=(max_x-scr->ncols)/2;
 	wrefresh(scr->win);
+	keypad(scr->win,TRUE);
 	nodelay(stdscr,TRUE);
 	return TTRS_SUCCESS;
 }
@@ -355,9 +364,11 @@ static int init_grid(grid_t (*pgrid)[TETRIS_WIDTH])
 		for(x=0; x<TETRIS_WIDTH; x++){
 			pg[y][x].y=y;
 			pg[y][x].x=x;
-			pg[y][x].type=BLOCK_NONE;
+			pg[y][x].type=BLOCK_TYPE_NONE;
+			pg[y][x].value=BLOCK_INIT_VALUE;
 		}
 	}
+	
 	return TTRS_SUCCESS;
 }
 

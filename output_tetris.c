@@ -1,3 +1,7 @@
+/**
+  *  Copyright (C) 2013  Handsome Zhou
+  */
+
 #include <string.h>
 #include "output_tetris.h"
 
@@ -5,7 +9,7 @@ static void draw_screen(screen_t *screen);
 static void clear_screen(screen_t *screen);
 static void draw_prompt(const screen_t *screen, prompt_t *prompt,status_t status);
 //just for test
-static void draw_grid(const screen_t *screen,grid_t (*const pgrid)[TETRIS_WIDTH]);
+static void draw_grid(const screen_t *screen,const grid_t (*pgrid)[TETRIS_WIDTH]);
 static void draw_current_block(const screen_t *screen,const block_t *block);
 static void draw_next_block(const screen_t *screen,block_t *block);
 
@@ -97,11 +101,11 @@ static void draw_prompt(const screen_t *screen, prompt_t *prompt,status_t status
 	if(has_colors()){attron(COLOR_PAIR(COLOR_BUTTON)|A_BOLD);}
 	switch(sts){
 		case STATUS_START:
+		case STATUS_INIT:
 			mvwprintw(scr->win,scr->begin_y+POS_PAUSE_Y,scr->begin_x+POS_PAUSE_X,\
 		"%s",ppt->pause);
 			break;
 			
-		case STATUS_INIT:
 		case STATUS_PAUSE:
 			mvwprintw(scr->win,scr->begin_y+POS_START_Y,scr->begin_x+POS_START_X,\
 		"%s",ppt->start);
@@ -121,19 +125,20 @@ static void draw_prompt(const screen_t *screen, prompt_t *prompt,status_t status
 	return;
 }
 
-static void draw_grid(const screen_t *screen, grid_t (*const pgrid)[TETRIS_WIDTH])
+static void draw_grid(const screen_t *screen, const grid_t (*pgrid)[TETRIS_WIDTH])
 {
 	const screen_t *scr=screen;
-	grid_t (*const pg)[TETRIS_WIDTH]=pgrid;
+	const grid_t (*pg)[TETRIS_WIDTH]=pgrid;
 	int y,x;
 	if(NULL==pg||NULL==scr){
 		return ;
 	}
 	for(y=scr->begin_y+1; y<scr->begin_y+1+TETRIS_HEIGHT; y++){
 		for(x=scr->begin_x+1; x<scr->begin_x+1+TETRIS_WIDTH; x++){
-			mvwprintw(scr->win,y,x,"%c",'@');
+			mvwprintw(scr->win,y,x,"%c",pg[y-(scr->begin_y+1)][x-(scr->begin_x+1)].value);
 		}
 	}
+	
 
 	wrefresh(scr->win);
 }

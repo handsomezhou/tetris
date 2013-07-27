@@ -1,3 +1,7 @@
+/**
+  *  Copyright (C) 2013  Handsome Zhou
+  */
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -202,35 +206,101 @@ block_t *current_block(const screen_t *screen,block_t *current,const block_t *ne
 int handle_tetris(tetris_t *tetris)
 {
 	tetris_t *ttrs=tetris;
-	int ch=-1;
-	MEVENT mevent;
-	
-	if(NULL==ttrs){
-		return TTRS_FAILED;
-	}
-	
-	//deal with key and mouse event
-	mousemask(ALL_MOUSE_EVENTS,NULL);
-	ch=wgetch(ttrs->scr.win);
-	if(-1==ch){//no key and mouse event
-		if(KEY_MOUSE==ch){
-			if(getmouse(&mevent)==OK){
-					
-			}else{
-
-			}
-		}else{
-			
-		}
-	}
-	
-	usleep(1000000);
 	//just for test
 	ttrs->prompt.level_value++;
 	ttrs->prompt.lines_value +=2;
 	ttrs->prompt.score_value +=3;
-	
+
+	//just for test
 	ttrs->cur_block.y++;
+	return TTRS_SUCCESS;
+}
+
+
+int deal_key_event(block_t *block, status_t *status, int key)
+{
+	block_t *bck=block;
+	status_t *sts=status;
+
+	switch(key){
+		case KEY_UP://Rotate
+			//just for test
+			bck->y--;
+			break;
+			
+		case KEY_RIGHT://Right
+			//just for test
+			bck->x++;
+			break;
+			
+		case KEY_DOWN://Down
+			//just for test
+			bck->y++;
+			break;
+			
+		case KEY_LEFT://Left
+			bck->x--;
+			break;
+
+		case 'S'://Start
+		case 's':
+			if(STATUS_START!=*sts){
+				*sts=STATUS_START;
+			}
+			break;
+			
+		case ' '://Pause
+		case 'P':
+		case 'p':
+			if(STATUS_PAUSE!=*sts){
+				*sts=STATUS_PAUSE;
+			}else{
+				*sts=STATUS_START;
+			}
+			break;
+
+		case KEY_ESC://Quit
+		case 'Q':
+		case 'q':
+			*sts=STATUS_QUIT;
+			break;
+			
+		default:
+			break;
+	}
+	
+	return TTRS_SUCCESS;
+}
+
+int deal_mouse_event(const screen_t *screen, status_t *status, const MEVENT *mevent)
+{
+	const screen_t *scr=screen;
+	status_t *sts=status;
+	const MEVENT *evt=mevent;
+
+	if(evt->y==scr->begin_y+POS_START_Y){
+		switch(*sts){
+			case STATUS_START:
+			case STATUS_INIT:
+				if(evt->x>=scr->begin_x+POS_START_X&&evt->x<scr->begin_x+POS_START_X+LEN_START_STR-1){
+					*sts=STATUS_PAUSE;
+				}
+				break;
+			case STATUS_PAUSE:
+				if(evt->x>=scr->begin_x+POS_PAUSE_X&&evt->x<scr->begin_x+POS_PAUSE_X+LEN_PAUSE_STR-1){
+					*sts=STATUS_START;
+				}
+				break;
+			default:
+				break;
+		}
+	}else if(evt->y==scr->begin_y+POS_QUIT_Y){
+		if(evt->x>=scr->begin_x+POS_QUIT_X&&evt->x<scr->begin_x+POS_QUIT_X+LEN_QUIT_STR-1){
+				*sts=STATUS_QUIT;
+		}
+	}else{
+
+	}
 	return TTRS_SUCCESS;
 }
 

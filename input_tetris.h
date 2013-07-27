@@ -1,8 +1,12 @@
+/**
+  *  Copyright (C) 2013  Handsome Zhou
+  */
+
 #ifndef INPUT_TETRIS_H
 #define INPUT_TETRIS_H
 
 #include "tetris.h"
 
-int input_tetris(tetris_t *tetris);
+void *input_tetris(void *arg);
 
 #endif	/*INPUT_TETRIS_H*/
