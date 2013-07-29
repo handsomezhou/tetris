@@ -6,21 +6,10 @@
 #include <time.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <signal.h>
 #include "tetris.h"
 #include "output_tetris.h"
 #include "input_tetris.h"
 #include "handle_tetris.h"
-
-void quit(int sign);
-void quit(int sign)
-{
-	int scr_y,scr_x;
-	getmaxyx(stdscr,scr_y,scr_x);
-	nodelay(stdscr,FALSE);
-	wgetch(stdscr);
-	nodelay(stdscr,TRUE);
-}
 
 int main(int argc, char *argv[])
 {
@@ -35,8 +24,7 @@ int main(int argc, char *argv[])
 		
 		return TTRS_FAILED;
 	}
-	signal(SIGINT,quit);
-	//signal(SIGUSR1,quit);
+	
 	paint_tetris(tetris);
 	if(pthread_create(&tid_input,NULL,input_tetris,(void *)tetris)!=0){
 		exit_tetris(tetris);
@@ -46,7 +34,7 @@ int main(int argc, char *argv[])
 	}
 	
 	while(tetris->status!=STATUS_QUIT){
-		if(STATUS_PAUSE!=tetris->status){
+		if(STATUS_PAUSE!=tetris->status&&STATUS_CONFIRM_QUIT!=tetris->status){
 			handle_tetris(tetris);
 		}
 		paint_tetris(tetris);

@@ -18,6 +18,7 @@ void *input_tetris(void *arg)
 	//deal with key and mouse event
 	mousemask(ALL_MOUSE_EVENTS,NULL);
 	while(ttrs->status!=STATUS_QUIT){
+		ch=-1;
 		ch=wgetch(ttrs->scr.win);
 		if(-1!=ch){//no key and mouse event
 			if(KEY_MOUSE==ch){
@@ -37,7 +38,7 @@ void *input_tetris(void *arg)
 				}
 			}else{//key event
 				mvwprintw(ttrs->scr.win,1,1,"%s:%4d","key:",ch);
-				deal_key_event(&ttrs->cur_block,&ttrs->status,ch);
+				deal_key_event(&ttrs->grid[0],&ttrs->cur_block,&ttrs->status,ch);
 			}
 		}
 		usleep(ttrs->min_unit_time);

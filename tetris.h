@@ -4,7 +4,9 @@
 
 #ifndef TETRIS_H
 #define TETRIS_H
+
 #include <ncurses.h>
+#include <pthread.h>
 
 #define	TETRIS_HEIGHT	20
 #define TETRIS_WIDTH	10
@@ -182,6 +184,7 @@ typedef enum status{
 	STATUS_INIT,
 	STATUS_START,
 	STATUS_PAUSE,
+	STATUS_CONFIRM_QUIT,
 	STATUS_QUIT,
 }status_t;
 
@@ -207,4 +210,6 @@ extern char blck[BLOCK_TOTAL_NUM][GRID_LEN*GRID_LEN+1];
 
 int init_tetris(tetris_t **tetris);
 void exit_tetris(tetris_t *tetris);
+
+pthread_mutex_t mutex;
 #endif	/*TETRIS_H*/

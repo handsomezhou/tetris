@@ -6,12 +6,17 @@
 #include <string.h>
 #include <unistd.h>
 #include "handle_tetris.h"
+#include "output_tetris.h"
 
 static block_t get_block_from_num(int num);
 static int get_num_from_block(const block_t *block);
 static block_t *block_copy(block_t *dest, const block_t *src);
 static int get_random_block();
 static block_t *new_block(block_t *block);
+static BOOL confirm_exit();
+//static BOOL can_rotate(const grid_t (*pgrid)[TETRIS_WIDTH],const block_t *block);
+static block_t *rotate_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block);
+block_t *get_next_rotate_block(block_t *next_block, const block_t *cur_block);
 
 static block_t get_block_from_num(int num)
 {
@@ -153,6 +158,121 @@ static block_t *new_block(block_t *block)
 	return NULL;
 }
 
+static BOOL confirm_exit()
+{
+	int ch=-1;
+	draw_confirm_exit();
+	nodelay(stdscr,FALSE);
+	ch=wgetch(stdscr);
+	nodelay(stdscr,TRUE);
+	if('Y'==ch||'y'==ch){
+		return TRUE;
+	}else{
+		return FALSE;
+	}
+	
+}
+//just for test
+#if 0
+static BOOL can_rotate(const grid_t (*pgrid)[TETRIS_WIDTH],const block_t *block)
+{
+	const grid_t (*pg)[TETRIS_WIDTH]=pgrid;
+	const block_t *bck=block;
+	block_t tmp;
+	block_t *pbck=NULL;
+	
+	if(NULL==pg||NULL==bck){
+		return FALSE;
+	}
+
+	pbck=get_next_rotate_block(&tmp,bck);
+	if(pbck==NULL){
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+#endif
+block_t *get_next_rotate_block(block_t *next_block, const block_t *cur_block)
+{
+	block_t *nbk=next_block;
+	const block_t *cbk=cur_block;
+	int num=-1;
+	if(NULL==cbk||NULL==nbk){
+		return NULL;
+	}
+
+	block_copy(nbk,cbk);
+	nbk->number++;
+	switch(nbk->type){
+		case BLOCK_I:
+			nbk->number=nbk->number%BLOCK_I_NUM;
+			break;
+		case BLOCK_J:
+			nbk->number=nbk->number%BLOCK_J_NUM;
+			break;
+		case BLOCK_L:
+			nbk->number=nbk->number%BLOCK_L_NUM;
+			break;
+		case BLOCK_O:
+			nbk->number=nbk->number%BLOCK_O_NUM;
+			break;
+		case BLOCK_S:
+			nbk->number=nbk->number%BLOCK_S_NUM;
+			break;
+		case BLOCK_Z:
+			nbk->number=nbk->number%BLOCK_Z_NUM;
+			break;
+		case BLOCK_T:
+			nbk->number=nbk->number%BLOCK_T_NUM;
+			break;
+		default:
+			return NULL;
+			break;
+	}
+	
+	num=get_num_from_block(nbk);
+	memset(nbk->blck,'\0',GRID_LEN*GRID_LEN+1);
+	strncpy(nbk->blck,blck[num],GRID_LEN*GRID_LEN+1);
+
+	return nbk;
+	
+}
+
+static block_t *rotate_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block)
+{
+
+	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
+	block_t *bck=block;
+	block_t *pbck=NULL;
+	block_t tmp;
+	int num;
+	BOOL bl=FALSE;
+
+	pbck=get_next_rotate_block(&tmp,bck);
+	if(NULL==pbck){
+		return NULL;
+	}
+	
+	block_copy(bck,&tmp);
+
+	return bck;
+}
+
+void interrupt_info(int sign)
+{
+	char info_key[]="you can exit the program by press key  'ESC','q','Q',";
+	char info_mouse[]="exit the program by mouse click 'QUIT'.";
+	
+	int scr_y,scr_x;
+	getmaxyx(stdscr,scr_y,scr_x);
+	if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_PROMPT));}
+	mvwprintw(stdscr,scr_y/2,((scr_x-strlen(info_key))/2>0)?((scr_x-strlen(info_key))/2):(1),"%s",info_key);
+	mvwprintw(stdscr,scr_y/2+1,((scr_x-strlen(info_mouse))/2>0)?((scr_x-strlen(info_mouse))/2):(1),"%s",info_mouse);
+	if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_PROMPT));}
+
+	usleep(3000000);
+}
 
 block_t *next_block(const screen_t *screen,block_t *block)
 {
@@ -212,34 +332,53 @@ int handle_tetris(tetris_t *tetris)
 	ttrs->prompt.score_value +=3;
 
 	//just for test
+	pthread_mutex_lock(&mutex);
 	ttrs->cur_block.y++;
+	pthread_mutex_unlock(&mutex);
+	
 	return TTRS_SUCCESS;
 }
 
 
-int deal_key_event(block_t *block, status_t *status, int key)
+int deal_key_event(grid_t (*pgrid)[TETRIS_WIDTH],block_t *block, status_t *status, int key)
 {
+	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
 	block_t *bck=block;
 	status_t *sts=status;
+	status_t sts_tmp;
+	if(NULL==pg||NULL==bck||NULL==sts){
+		return TTRS_FAILED;
+	}
 
 	switch(key){
 		case KEY_UP://Rotate
 			//just for test
-			bck->y--;
+			//bck->y--;
+			pthread_mutex_lock(&mutex);
+			rotate_block(pg,bck);
+			pthread_mutex_unlock(&mutex);
 			break;
 			
 		case KEY_RIGHT://Right
-			//just for test
-			bck->x++;
+			if(STATUS_PAUSE!=*sts){
+				bck->x++;
+			}
+			
 			break;
 			
 		case KEY_DOWN://Down
-			//just for test
-			bck->y++;
+			if(STATUS_PAUSE!=*sts){
+				//just for test
+				bck->y++;
+			}
+			
 			break;
 			
 		case KEY_LEFT://Left
-			bck->x--;
+			if(STATUS_PAUSE!=*sts){
+				bck->x--;
+			}
+			
 			break;
 
 		case 'S'://Start
@@ -262,7 +401,13 @@ int deal_key_event(block_t *block, status_t *status, int key)
 		case KEY_ESC://Quit
 		case 'Q':
 		case 'q':
-			*sts=STATUS_QUIT;
+			sts_tmp=*sts;
+			*sts=STATUS_CONFIRM_QUIT;
+			if(confirm_exit()==TRUE){
+				*sts=STATUS_QUIT;
+			}else{
+				*sts=sts_tmp;
+			}
 			break;
 			
 		default:
@@ -276,6 +421,7 @@ int deal_mouse_event(const screen_t *screen, status_t *status, const MEVENT *mev
 {
 	const screen_t *scr=screen;
 	status_t *sts=status;
+	status_t sts_tmp;
 	const MEVENT *evt=mevent;
 
 	if(evt->y==scr->begin_y+POS_START_Y){
@@ -296,11 +442,18 @@ int deal_mouse_event(const screen_t *screen, status_t *status, const MEVENT *mev
 		}
 	}else if(evt->y==scr->begin_y+POS_QUIT_Y){
 		if(evt->x>=scr->begin_x+POS_QUIT_X&&evt->x<scr->begin_x+POS_QUIT_X+LEN_QUIT_STR-1){
+			sts_tmp=*sts;
+			*sts=STATUS_CONFIRM_QUIT;
+			if(confirm_exit()==TRUE){
 				*sts=STATUS_QUIT;
+			}else{
+				*sts=sts_tmp;
+			}
 		}
 	}else{
 
 	}
 	return TTRS_SUCCESS;
 }
+
 

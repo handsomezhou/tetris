@@ -3,6 +3,8 @@
   */
 
 #include <string.h>
+//just for test
+#include "handle_tetris.h"
 #include "output_tetris.h"
 
 static void draw_screen(screen_t *screen);
@@ -12,6 +14,7 @@ static void draw_prompt(const screen_t *screen, prompt_t *prompt,status_t status
 static void draw_grid(const screen_t *screen,const grid_t (*pgrid)[TETRIS_WIDTH]);
 static void draw_current_block(const screen_t *screen,const block_t *block);
 static void draw_next_block(const screen_t *screen,block_t *block);
+
 
 void paint_tetris(tetris_t *tetris)
 {
@@ -25,8 +28,27 @@ void paint_tetris(tetris_t *tetris)
 	draw_grid(&ttrs->scr,&ttrs->grid[0]);
 	draw_next_block(&ttrs->scr,&ttrs->next_block);
 	draw_current_block(&ttrs->scr,&ttrs->cur_block);
+	if(ttrs->status==STATUS_CONFIRM_QUIT){
+		draw_confirm_exit();
+	}
 	
 	return;
+}
+
+void draw_confirm_exit()
+{
+	
+		char confirm_quit[]="Please press key 'y' or 'Y' to confirm exit the program,";
+		char confirm_continue[]="press others key to continue!";
+	
+		int scr_y,scr_x;
+		getmaxyx(stdscr,scr_y,scr_x);
+		if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_PROMPT));}
+		mvwprintw(stdscr,scr_y/2,((scr_x-strlen(confirm_quit))/2>0)?((scr_x-strlen(confirm_quit))/2):(1),"%s",confirm_quit);
+		mvwprintw(stdscr,scr_y/2+1,((scr_x-strlen(confirm_continue))/2>0)?((scr_x-strlen(confirm_continue))/2):(1),"%s",confirm_continue);
+		if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_PROMPT));}
+
+		wrefresh(stdscr);
 }
 
 static void draw_screen(screen_t *screen)
@@ -107,6 +129,7 @@ static void draw_prompt(const screen_t *screen, prompt_t *prompt,status_t status
 			break;
 			
 		case STATUS_PAUSE:
+		case STATUS_CONFIRM_QUIT:
 			mvwprintw(scr->win,scr->begin_y+POS_START_Y,scr->begin_x+POS_START_X,\
 		"%s",ppt->start);
 			break;
@@ -167,6 +190,10 @@ static void draw_current_block(const screen_t *screen,const block_t *block)
 	}
 	//just for test
 	mvwprintw(scr->win,y+2,1,"%s:%d-%d",__func__,bck->type,bck->number);
+	block_t tmp;
+	get_next_rotate_block(&tmp,bck);
+	mvwprintw(scr->win,y+3,1,"%s:%d-%d",__func__,tmp.type,tmp.number);
+	
 	if(has_colors()){attroff(COLOR_PAIR(COLOR_TEST));}
 	wrefresh(scr->win);
 	
@@ -201,4 +228,3 @@ static void draw_next_block(const screen_t *screen,block_t *block)
 	
 	return;
 }
-

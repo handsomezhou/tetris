@@ -5,8 +5,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include "tetris.h"
 #include "handle_tetris.h"
+
 
 char blck[BLOCK_TOTAL_NUM][GRID_LEN*GRID_LEN+1]=
 {//BLOCK_I
@@ -25,19 +27,19 @@ char blck[BLOCK_TOTAL_NUM][GRID_LEN*GRID_LEN+1]=
 		 '0','1','1','0',
 		 '0','0','0','0','\0',},
 
-		{'0','1','0','0',
-		 '0','1','1','1',
+		{'1','0','0','0',
+		 '1','1','1','0',
 		 '0','0','0','0',
 		 '0','0','0','0','\0',},
 
-		{'0','0','1','1',
-		 '0','0','1','0',
-		 '0','0','1','0',
+		{'0','1','1','0',
+		 '0','1','0','0',
+		 '0','1','0','0',
 		 '0','0','0','0','\0',},
 		
 		{'0','0','0','0',
-		 '0','1','1','1',
-		 '0','0','0','1',
+		 '1','1','1','0',
+		 '0','0','1','0',
 		 '0','0','0','0','\0',},
 //BLOCK_L
 		{'0','1','0','0',
@@ -152,6 +154,9 @@ int init_tetris(tetris_t **tetris)
 		(*ttrs)->status=STATUS_INIT;
 		(*ttrs)->event=EVENT_NONE;
 		(*ttrs)->min_unit_time=MIN_UNIT_TIME;
+
+		signal(SIGINT,interrupt_info);
+		pthread_mutex_init(&mutex,NULL);
 		
 		return TTRS_SUCCESS;
 		
@@ -167,6 +172,7 @@ void exit_tetris(tetris_t *tetris)
 		return;
 	}
 
+	pthread_mutex_destroy(&mutex);
 	exit_prompt(&ttrs->prompt);
 	exit_screen(&ttrs->scr);
 	
