@@ -180,6 +180,13 @@ typedef struct block{
 	char blck[GRID_LEN*GRID_LEN+1];	//Displayed on the screen
 }block_t;
 
+typedef enum move_direction{
+	MOVE_LEFT,
+	MOVE_RIGHT,
+	MOVE_DOWN,
+	MOVE_NONE,
+}move_dir_t;
+
 typedef enum status{
 	STATUS_INIT,
 	STATUS_START,
@@ -199,6 +206,7 @@ typedef struct tetris{
 	prompt_t prompt;
 	grid_t grid[TETRIS_HEIGHT][TETRIS_WIDTH];
 	block_t cur_block;
+	move_dir_t move_dir;	//just for test
 	block_t next_block;
 	status_t status;
 	event_t event;
