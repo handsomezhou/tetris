@@ -17,6 +17,9 @@ static BOOL confirm_exit();
 //static BOOL can_rotate(const grid_t (*pgrid)[TETRIS_WIDTH],const block_t *block);
 static block_t *rotate_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block);
 block_t *get_next_rotate_block(block_t *next_block, const block_t *cur_block);
+static block_t *move_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block, dir_t direction);
+static BOOL can_move_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block,int y, int x);
+static int add_block_to_grid(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block);
 
 static block_t get_block_from_num(int num)
 {
@@ -172,27 +175,29 @@ static BOOL confirm_exit()
 	}
 	
 }
-//just for test
-#if 0
-static BOOL can_rotate(const grid_t (*pgrid)[TETRIS_WIDTH],const block_t *block)
+
+static block_t *rotate_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block)
 {
-	const grid_t (*pg)[TETRIS_WIDTH]=pgrid;
-	const block_t *bck=block;
-	block_t tmp;
+
+	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
+	block_t *bck=block;
 	block_t *pbck=NULL;
-	
-	if(NULL==pg||NULL==bck){
-		return FALSE;
-	}
+	block_t tmp;
+	int num;
+	BOOL bl=FALSE;
 
 	pbck=get_next_rotate_block(&tmp,bck);
-	if(pbck==NULL){
-		return FALSE;
+	if(NULL==pbck){
+		return NULL;
 	}
-	
-	return TRUE;
+	if(can_move_block(pg,pbck,pbck->y,pbck->x)==TRUE){
+		block_copy(bck,&tmp);
+		return bck;
+	}
+
+	return NULL;
 }
-#endif
+
 block_t *get_next_rotate_block(block_t *next_block, const block_t *cur_block)
 {
 	block_t *nbk=next_block;
@@ -239,24 +244,228 @@ block_t *get_next_rotate_block(block_t *next_block, const block_t *cur_block)
 	
 }
 
-static block_t *rotate_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block)
+static block_t *move_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block, dir_t direction)
 {
-
 	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
 	block_t *bck=block;
-	block_t *pbck=NULL;
-	block_t tmp;
-	int num;
-	BOOL bl=FALSE;
+	dir_t dir=direction;
 
-	pbck=get_next_rotate_block(&tmp,bck);
-	if(NULL==pbck){
+	if(NULL==pg||NULL==bck){
 		return NULL;
 	}
 	
-	block_copy(bck,&tmp);
+	switch(dir){
+		case DIR_LEFT:
+			if(can_move_block(pg,bck,bck->y,bck->x-1)==TRUE){
+				bck->x--;
+				return bck;
+			}
+			break;
 
-	return bck;
+		case DIR_RIGHT:
+			if(can_move_block(pg,bck,bck->y,bck->x+1)==TRUE){
+				bck->x++;
+				return bck;
+			}
+			break;
+
+		case DIR_DOWN:
+			if(can_move_block(pg,bck,bck->y+1,bck->x)==TRUE){
+				bck->y++;
+				return bck;
+			}
+			break;
+			
+		default:
+			break;
+	}
+	
+	return NULL;
+}
+
+static BOOL is_collision_wall(const block_t *block,int min_x,int max_x,int max_y);
+static BOOL is_collision_block(int min_x,int max_x,int max_y);
+static BOOL is_collision_wall(const block_t *block,int min_x,int max_x,int max_y)
+{
+	const block_t *bck=block;
+	if(NULL==bck){
+		return TRUE;
+	}
+
+	if(bck->x+min_x-1<1||bck->x+max_x-1>TETRIS_WIDTH||bck->y+max_y-1>TETRIS_HEIGHT){
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+static BOOL can_move_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block,int y, int x)
+{
+	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
+	block_t *bck=block;
+	block_t tmp;
+	block_copy(&tmp,bck);
+	tmp.y=y;
+	tmp.x=x;
+	
+	if(NULL==pg||NULL==bck){
+		return FALSE;
+	}
+#if 0
+	if(tmp.y==bck->y&&tmp.x==bck->x){
+		return TRUE;
+	}
+#endif
+
+	switch(bck->type){
+		case BLOCK_I:
+			switch(bck->number){
+				case 0:
+					if(is_collision_wall(&tmp,BLOCK_I0_MIN_X,BLOCK_I0_MAX_X,BLOCK_I0_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case BLOCK_I_NUM-1:
+					if(is_collision_wall(&tmp,BLOCK_I1_MIN_X,BLOCK_I1_MAX_X,BLOCK_I1_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+			}
+			break;
+		case BLOCK_J:
+			switch(bck->number){
+				case 0:
+					if(is_collision_wall(&tmp,BLOCK_J0_MIN_X,BLOCK_J0_MAX_X,BLOCK_J0_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case 1:
+					if(is_collision_wall(&tmp,BLOCK_J1_MIN_X,BLOCK_J1_MAX_X,BLOCK_J1_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case 2:
+					if(is_collision_wall(&tmp,BLOCK_J2_MIN_X,BLOCK_J2_MAX_X,BLOCK_J2_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case BLOCK_J_NUM-1:
+					if(is_collision_wall(&tmp,BLOCK_J3_MIN_X,BLOCK_J3_MAX_X,BLOCK_J3_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+			}
+			break;
+		case BLOCK_L:
+			switch(bck->number){
+				case 0:
+					if(is_collision_wall(&tmp,BLOCK_L0_MIN_X,BLOCK_L0_MAX_X,BLOCK_L0_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case 1:
+					if(is_collision_wall(&tmp,BLOCK_L1_MIN_X,BLOCK_L1_MAX_X,BLOCK_L1_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case 2:
+					if(is_collision_wall(&tmp,BLOCK_L2_MIN_X,BLOCK_L2_MAX_X,BLOCK_L2_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case BLOCK_L_NUM-1:
+					if(is_collision_wall(&tmp,BLOCK_L3_MIN_X,BLOCK_L3_MAX_X,BLOCK_L3_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+			}
+			break;
+		case BLOCK_O:
+			if(is_collision_wall(&tmp,BLOCK_O0_MIN_X,BLOCK_O0_MAX_X,BLOCK_O0_MAX_Y)==TRUE){
+					return FALSE;
+			}
+			break;
+		case BLOCK_S:
+			switch(bck->number){
+				case 0:
+					if(is_collision_wall(&tmp,BLOCK_S0_MIN_X,BLOCK_S0_MAX_X,BLOCK_S0_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case BLOCK_S_NUM-1:
+					if(is_collision_wall(&tmp,BLOCK_S1_MIN_X,BLOCK_S1_MAX_X,BLOCK_S1_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+			}
+			break;
+		case BLOCK_Z:
+			switch(bck->number){
+				case 0:
+					if(is_collision_wall(&tmp,BLOCK_Z0_MIN_X,BLOCK_Z0_MAX_X,BLOCK_Z0_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case BLOCK_Z_NUM-1:
+					if(is_collision_wall(&tmp,BLOCK_Z1_MIN_X,BLOCK_Z1_MAX_X,BLOCK_Z1_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+			}
+			break;
+		case BLOCK_T:
+			switch(bck->number){
+				case 0:
+					if(is_collision_wall(&tmp,BLOCK_T0_MIN_X,BLOCK_T0_MAX_X,BLOCK_T0_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case 1:
+					if(is_collision_wall(&tmp,BLOCK_T1_MIN_X,BLOCK_T1_MAX_X,BLOCK_T1_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case 2:
+					if(is_collision_wall(&tmp,BLOCK_T2_MIN_X,BLOCK_T2_MAX_X,BLOCK_T2_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+				case BLOCK_T_NUM-1:
+					if(is_collision_wall(&tmp,BLOCK_T3_MIN_X,BLOCK_T3_MAX_X,BLOCK_T3_MAX_Y)==TRUE){
+						return FALSE;
+					}
+					break;
+			}
+			break;
+		default:
+			break;
+	}
+	
+	return TRUE;
+}
+
+static int add_block_to_grid(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block)
+{
+	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
+	const block_t *bck=block;
+	if(NULL==pg||NULL==bck){
+		return TTRS_FAILED;
+	}
+	int x=0;
+	int y=0;
+	if(bck->y+y-1>=0){
+		for(y=0; y<GRID_LEN; y++){
+			for(x=0; x<GRID_LEN; x++){
+				if(bck->blck[y*GRID_LEN+x]=='1'){
+						pg[bck->y+y-1][bck->x+x-1].value='1';
+				}
+			}
+		}
+	}else{//Block quickly filled case
+		return TTRS_FAILED;
+	}
+	
+	return TTRS_SUCCESS;
 }
 
 void interrupt_info(int sign)
@@ -319,6 +528,92 @@ block_t *current_block(const screen_t *screen,block_t *current,const block_t *ne
 	}
 	cur->y=POS_CURRENT_BLOCK_Y;
 	cur->x=POS_CURRENT_BLOCK_X;
+
+	switch(cur->type){
+		case BLOCK_I:
+			switch(cur->number){
+				case 0:
+					cur->y = cur->y+GRID_LEN-BLOCK_I0_MAX_Y;
+					break;
+				case BLOCK_I_NUM-1:
+					cur->y = cur->y+GRID_LEN-BLOCK_I1_MAX_Y;
+					break;
+			}
+			break;
+		case BLOCK_J:
+			switch(cur->number){
+				case 0:
+					cur->y = cur->y+GRID_LEN-BLOCK_J0_MAX_Y;
+					break;
+				case 1:
+					cur->y = cur->y+GRID_LEN-BLOCK_J1_MAX_Y;
+					break;
+				case 2:
+					cur->y = cur->y+GRID_LEN-BLOCK_J2_MAX_Y;
+					break;
+				case BLOCK_J_NUM-1:
+					cur->y = cur->y+GRID_LEN-BLOCK_J3_MAX_Y;
+					break;
+			}
+			break;
+		case BLOCK_L:
+			switch(cur->number){
+				case 0:
+					cur->y = cur->y+GRID_LEN-BLOCK_L0_MAX_Y;
+					break;
+				case 1:
+					cur->y = cur->y+GRID_LEN-BLOCK_L1_MAX_Y;
+					break;
+				case 2:
+					cur->y = cur->y+GRID_LEN-BLOCK_L2_MAX_Y;
+					break;
+				case BLOCK_L_NUM-1:
+					cur->y = cur->y+GRID_LEN-BLOCK_L3_MAX_Y;
+					break;
+			}
+			break;
+		case BLOCK_O:
+			cur->y=cur->y+GRID_LEN-BLOCK_O0_MAX_Y;
+			break;
+		case BLOCK_S:
+			switch(cur->number){
+				case 0:
+					cur->y = cur->y+GRID_LEN-BLOCK_S0_MAX_Y;
+					break;
+				case BLOCK_S_NUM-1:
+					cur->y = cur->y+GRID_LEN-BLOCK_S1_MAX_Y;
+					break;
+			}
+			break;
+		case BLOCK_Z:
+			switch(cur->number){
+				case 0:
+					cur->y = cur->y+GRID_LEN-BLOCK_Z0_MAX_Y;
+					break;
+				case BLOCK_Z_NUM-1:
+					cur->y = cur->y+GRID_LEN-BLOCK_Z1_MAX_Y;
+					break;
+			}
+			break;
+		case BLOCK_T:
+			switch(cur->number){
+				case 0:
+					cur->y = cur->y+GRID_LEN-BLOCK_T0_MAX_Y;
+					break;
+				case 1:
+					cur->y = cur->y+GRID_LEN-BLOCK_T1_MAX_Y;
+					break;
+				case 2:
+					cur->y = cur->y+GRID_LEN-BLOCK_T2_MAX_Y;
+					break;
+				case BLOCK_T_NUM-1:
+					cur->y = cur->y+GRID_LEN-BLOCK_T3_MAX_Y;
+					break;
+			}
+			break;
+		default:
+			break;
+	}
 	
 	return cur;
 }
@@ -326,6 +621,7 @@ block_t *current_block(const screen_t *screen,block_t *current,const block_t *ne
 int handle_tetris(tetris_t *tetris)
 {
 	tetris_t *ttrs=tetris;
+	block_t *bck=NULL;
 	//just for test
 	ttrs->prompt.level_value++;
 	ttrs->prompt.lines_value +=2;
@@ -333,7 +629,12 @@ int handle_tetris(tetris_t *tetris)
 
 	//just for test
 	pthread_mutex_lock(&mutex);
-	ttrs->cur_block.y++;
+	bck=move_block(&ttrs->grid[0],&ttrs->cur_block,DIR_DOWN);
+	if(NULL==bck){
+		add_block_to_grid(&ttrs->grid[0],&ttrs->cur_block);
+		current_block(&ttrs->scr,&ttrs->cur_block,&ttrs->next_block);
+		next_block(&ttrs->scr,&ttrs->next_block);
+	}
 	pthread_mutex_unlock(&mutex);
 	
 	return TTRS_SUCCESS;
@@ -352,31 +653,36 @@ int deal_key_event(grid_t (*pgrid)[TETRIS_WIDTH],block_t *block, status_t *statu
 
 	switch(key){
 		case KEY_UP://Rotate
-			//just for test
-			//bck->y--;
-			pthread_mutex_lock(&mutex);
-			rotate_block(pg,bck);
-			pthread_mutex_unlock(&mutex);
+			if(STATUS_PAUSE!=*sts){
+				pthread_mutex_lock(&mutex);
+				rotate_block(pg,bck);
+				pthread_mutex_unlock(&mutex);
+			}
 			break;
 			
 		case KEY_RIGHT://Right
 			if(STATUS_PAUSE!=*sts){
-				bck->x++;
+				pthread_mutex_lock(&mutex);
+				move_block(pg,bck,DIR_RIGHT);
+				pthread_mutex_unlock(&mutex);
 			}
 			
 			break;
 			
 		case KEY_DOWN://Down
 			if(STATUS_PAUSE!=*sts){
-				//just for test
-				bck->y++;
+				pthread_mutex_lock(&mutex);
+				move_block(pg,bck,DIR_DOWN);
+				pthread_mutex_unlock(&mutex);
 			}
 			
 			break;
 			
 		case KEY_LEFT://Left
 			if(STATUS_PAUSE!=*sts){
-				bck->x--;
+				pthread_mutex_lock(&mutex);
+				move_block(pg,bck,DIR_LEFT);
+				pthread_mutex_unlock(&mutex);
 			}
 			
 			break;

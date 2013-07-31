@@ -36,7 +36,7 @@
 
 #define POS_NEXT_BLOCK_Y 	1
 #define POS_NEXT_BLOCK_X 	(TETRIS_WIDTH+2+3)
-#define POS_CURRENT_BLOCK_Y -4
+#define POS_CURRENT_BLOCK_Y -3
 #define POS_CURRENT_BLOCK_X	((TETRIS_WIDTH-GRID_LEN)/2+1)
 
 #define NEXT_BLOCK_HEIGHT	5
@@ -100,6 +100,101 @@
 #define BLOCK_S_START_NUM	(BLOCK_O_START_NUM+BLOCK_O_NUM)
 #define BLOCK_Z_START_NUM	(BLOCK_S_START_NUM+BLOCK_S_NUM)
 #define BLOCK_T_START_NUM	(BLOCK_Z_START_NUM+BLOCK_Z_NUM)
+
+#define BLOCK_I0_MIN_X		2
+#define BLOCK_I0_MIN_Y		1
+#define BLOCK_I0_MAX_X		2
+#define BLOCK_I0_MAX_Y		4
+
+#define BLOCK_I1_MIN_X		1
+#define BLOCK_I1_MIN_Y		2
+#define BLOCK_I1_MAX_X		4
+#define BLOCK_I1_MAX_Y		2
+
+#define BLOCK_J0_MIN_X		2
+#define BLOCK_J0_MIN_Y		1
+#define BLOCK_J0_MAX_X		3
+#define BLOCK_J0_MAX_Y		3
+
+#define BLOCK_J1_MIN_X		1
+#define BLOCK_J1_MAX_X		3
+#define BLOCK_J1_MIN_Y		1
+#define BLOCK_J1_MAX_Y		2
+
+#define BLOCK_J2_MIN_X		2
+#define BLOCK_J2_MIN_Y		1
+#define BLOCK_J2_MAX_X		3
+#define BLOCK_J2_MAX_Y		3
+
+#define BLOCK_J3_MIN_X		1
+#define BLOCK_J3_MIN_Y		2
+#define BLOCK_J3_MAX_X		3
+#define BLOCK_J3_MAX_Y		3
+
+#define BLOCK_L0_MIN_X		2
+#define BLOCK_L0_MIN_Y		1
+#define BLOCK_L0_MAX_X		3
+#define BLOCK_L0_MAX_Y		3
+
+#define BLOCK_L1_MIN_X		1
+#define BLOCK_L1_MIN_Y		2
+#define BLOCK_L1_MAX_X		3
+#define BLOCK_L1_MAX_Y		3
+
+#define BLOCK_L2_MIN_X		1
+#define BLOCK_L2_MIN_Y		1
+#define BLOCK_L2_MAX_X		2
+#define BLOCK_L2_MAX_Y		3
+
+#define BLOCK_L3_MIN_X		1
+#define BLOCK_L3_MIN_Y		1
+#define BLOCK_L3_MAX_X		3
+#define BLOCK_L3_MAX_Y		2
+
+#define BLOCK_O0_MIN_X		2
+#define BLOCK_O0_MIN_Y		2
+#define BLOCK_O0_MAX_X		3
+#define BLOCK_O0_MAX_Y		3
+
+#define BLOCK_S0_MIN_X		1
+#define BLOCK_S0_MIN_Y		1
+#define BLOCK_S0_MAX_X		3
+#define BLOCK_S0_MAX_Y		2
+
+#define BLOCK_S1_MIN_X		2
+#define BLOCK_S1_MIN_Y		1
+#define BLOCK_S1_MAX_X		3
+#define BLOCK_S1_MAX_Y		3
+
+#define BLOCK_Z0_MIN_X		1
+#define BLOCK_Z0_MIN_Y		1
+#define BLOCK_Z0_MAX_X		3
+#define BLOCK_Z0_MAX_Y		2
+
+#define BLOCK_Z1_MIN_X		2
+#define BLOCK_Z1_MIN_Y		1
+#define BLOCK_Z1_MAX_X		3
+#define BLOCK_Z1_MAX_Y		3
+
+#define BLOCK_T0_MIN_X		1
+#define BLOCK_T0_MIN_Y		1
+#define BLOCK_T0_MAX_X		3
+#define BLOCK_T0_MAX_Y		2
+
+#define BLOCK_T1_MIN_X		2
+#define BLOCK_T1_MIN_Y		1
+#define BLOCK_T1_MAX_X		3
+#define BLOCK_T1_MAX_Y		3
+
+#define BLOCK_T2_MIN_X		1
+#define BLOCK_T2_MIN_Y		2
+#define BLOCK_T2_MAX_X		3
+#define BLOCK_T2_MAX_Y		3
+
+#define BLOCK_T3_MIN_X		1
+#define BLOCK_T3_MIN_Y		1
+#define BLOCK_T3_MAX_X		2
+#define BLOCK_T3_MAX_Y		3
 
 #define KEY_ESC			27
 #define MIN_UNIT_TIME	100000 //us
@@ -180,12 +275,12 @@ typedef struct block{
 	char blck[GRID_LEN*GRID_LEN+1];	//Displayed on the screen
 }block_t;
 
-typedef enum move_direction{
-	MOVE_LEFT,
-	MOVE_RIGHT,
-	MOVE_DOWN,
-	MOVE_NONE,
-}move_dir_t;
+typedef enum direction{
+	DIR_LEFT,
+	DIR_RIGHT,
+	DIR_DOWN,
+	DIR_NONE,
+}dir_t;		//Move direction of the block
 
 typedef enum status{
 	STATUS_INIT,
@@ -206,7 +301,7 @@ typedef struct tetris{
 	prompt_t prompt;
 	grid_t grid[TETRIS_HEIGHT][TETRIS_WIDTH];
 	block_t cur_block;
-	move_dir_t move_dir;	//just for test
+	dir_t dir;	//move direction of the cur_block
 	block_t next_block;
 	status_t status;
 	event_t event;

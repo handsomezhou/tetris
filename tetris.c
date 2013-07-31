@@ -150,7 +150,8 @@ int init_tetris(tetris_t **tetris)
 		//just for test
 		next_block(&(*ttrs)->scr,&(*ttrs)->next_block);
 		current_block(&(*ttrs)->scr,&(*ttrs)->cur_block,&(*ttrs)->next_block);
-
+		next_block(&(*ttrs)->scr,&(*ttrs)->next_block);
+		(*ttrs)->dir=DIR_NONE;
 		(*ttrs)->status=STATUS_INIT;
 		(*ttrs)->event=EVENT_NONE;
 		(*ttrs)->min_unit_time=MIN_UNIT_TIME;

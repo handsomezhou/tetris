@@ -193,6 +193,7 @@ static void draw_current_block(const screen_t *screen,const block_t *block)
 	block_t tmp;
 	get_next_rotate_block(&tmp,bck);
 	mvwprintw(scr->win,y+3,1,"%s:%d-%d",__func__,tmp.type,tmp.number);
+	mvwprintw(scr->win,1,1,"%s:%d-%d",__func__,tmp.y,tmp.x);
 	
 	if(has_colors()){attroff(COLOR_PAIR(COLOR_TEST));}
 	wrefresh(scr->win);
