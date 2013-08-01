@@ -20,6 +20,13 @@ block_t *get_next_rotate_block(block_t *next_block, const block_t *cur_block);
 static block_t *move_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block, dir_t direction);
 static BOOL can_move_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block,int y, int x);
 static int add_block_to_grid(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block);
+static int  remove_block_layer(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block);
+static int get_remove_layer_num(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block);
+static int remove_layer(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block, int layer);
+static int remove_layer_from_grid(grid_t (*pgrid)[TETRIS_WIDTH],int layer_y);
+
+static int set_prompt(const block_t *block, prompt_t *prompt, int remove_layer);
+
 
 static block_t get_block_from_num(int num)
 {
@@ -126,9 +133,13 @@ static block_t *block_copy(block_t *dest, const block_t *src)
 static int get_random_block()
 {
 	int num;
-	
-	num=rand()%BLOCK_TOTAL_NUM;
 
+	//just for test
+#if 0
+	num=rand()%BLOCK_TOTAL_NUM;
+#else
+	num=0;
+#endif
 	return num;
 }
 
@@ -284,7 +295,7 @@ static block_t *move_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block, dir_t 
 }
 
 static BOOL is_collision_wall(const block_t *block,int min_x,int max_x,int max_y);
-static BOOL is_collision_block(int min_x,int max_x,int max_y);
+static BOOL is_collision_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block);
 static BOOL is_collision_wall(const block_t *block,int min_x,int max_x,int max_y)
 {
 	const block_t *bck=block;
@@ -294,6 +305,29 @@ static BOOL is_collision_wall(const block_t *block,int min_x,int max_x,int max_y
 
 	if(bck->x+min_x-1<1||bck->x+max_x-1>TETRIS_WIDTH||bck->y+max_y-1>TETRIS_HEIGHT){
 		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+static BOOL is_collision_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block)
+{
+	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
+	block_t *bck=block;
+	int y,x;
+	if(NULL==pg||NULL==bck){
+		return TRUE;
+	}
+	
+	for(y=GRID_LEN-1; y>=0; y--){
+		for(x=GRID_LEN-1; x>=0; x--){
+			if(bck->blck[y*GRID_LEN+x]=='1'){
+//no necessary to judge the range of (bck->x+x-1),because it not less than zero when the condition is fulfilled.			
+				if(bck->y+y-1>=0&&pg[bck->y+y-1][bck->x+x-1].value=='1'){
+					return TRUE;
+				}
+			}
+		}
 	}
 	
 	return FALSE;
@@ -321,12 +355,14 @@ static BOOL can_move_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block,i
 		case BLOCK_I:
 			switch(bck->number){
 				case 0:
-					if(is_collision_wall(&tmp,BLOCK_I0_MIN_X,BLOCK_I0_MAX_X,BLOCK_I0_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_I0_MIN_X,BLOCK_I0_MAX_X,BLOCK_I0_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case BLOCK_I_NUM-1:
-					if(is_collision_wall(&tmp,BLOCK_I1_MIN_X,BLOCK_I1_MAX_X,BLOCK_I1_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_I1_MIN_X,BLOCK_I1_MAX_X,BLOCK_I1_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
@@ -335,22 +371,26 @@ static BOOL can_move_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block,i
 		case BLOCK_J:
 			switch(bck->number){
 				case 0:
-					if(is_collision_wall(&tmp,BLOCK_J0_MIN_X,BLOCK_J0_MAX_X,BLOCK_J0_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_J0_MIN_X,BLOCK_J0_MAX_X,BLOCK_J0_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case 1:
-					if(is_collision_wall(&tmp,BLOCK_J1_MIN_X,BLOCK_J1_MAX_X,BLOCK_J1_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_J1_MIN_X,BLOCK_J1_MAX_X,BLOCK_J1_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case 2:
-					if(is_collision_wall(&tmp,BLOCK_J2_MIN_X,BLOCK_J2_MAX_X,BLOCK_J2_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_J2_MIN_X,BLOCK_J2_MAX_X,BLOCK_J2_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case BLOCK_J_NUM-1:
-					if(is_collision_wall(&tmp,BLOCK_J3_MIN_X,BLOCK_J3_MAX_X,BLOCK_J3_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_J3_MIN_X,BLOCK_J3_MAX_X,BLOCK_J3_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
@@ -359,41 +399,48 @@ static BOOL can_move_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block,i
 		case BLOCK_L:
 			switch(bck->number){
 				case 0:
-					if(is_collision_wall(&tmp,BLOCK_L0_MIN_X,BLOCK_L0_MAX_X,BLOCK_L0_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_L0_MIN_X,BLOCK_L0_MAX_X,BLOCK_L0_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case 1:
-					if(is_collision_wall(&tmp,BLOCK_L1_MIN_X,BLOCK_L1_MAX_X,BLOCK_L1_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_L1_MIN_X,BLOCK_L1_MAX_X,BLOCK_L1_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case 2:
-					if(is_collision_wall(&tmp,BLOCK_L2_MIN_X,BLOCK_L2_MAX_X,BLOCK_L2_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_L2_MIN_X,BLOCK_L2_MAX_X,BLOCK_L2_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case BLOCK_L_NUM-1:
-					if(is_collision_wall(&tmp,BLOCK_L3_MIN_X,BLOCK_L3_MAX_X,BLOCK_L3_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_L3_MIN_X,BLOCK_L3_MAX_X,BLOCK_L3_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 			}
 			break;
 		case BLOCK_O:
-			if(is_collision_wall(&tmp,BLOCK_O0_MIN_X,BLOCK_O0_MAX_X,BLOCK_O0_MAX_Y)==TRUE){
+			if(is_collision_wall(&tmp,BLOCK_O0_MIN_X,BLOCK_O0_MAX_X,BLOCK_O0_MAX_Y)==TRUE||\
+				is_collision_block(pg,&tmp)==TRUE){
 					return FALSE;
 			}
 			break;
 		case BLOCK_S:
 			switch(bck->number){
 				case 0:
-					if(is_collision_wall(&tmp,BLOCK_S0_MIN_X,BLOCK_S0_MAX_X,BLOCK_S0_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_S0_MIN_X,BLOCK_S0_MAX_X,BLOCK_S0_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case BLOCK_S_NUM-1:
-					if(is_collision_wall(&tmp,BLOCK_S1_MIN_X,BLOCK_S1_MAX_X,BLOCK_S1_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_S1_MIN_X,BLOCK_S1_MAX_X,BLOCK_S1_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
@@ -402,12 +449,14 @@ static BOOL can_move_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block,i
 		case BLOCK_Z:
 			switch(bck->number){
 				case 0:
-					if(is_collision_wall(&tmp,BLOCK_Z0_MIN_X,BLOCK_Z0_MAX_X,BLOCK_Z0_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_Z0_MIN_X,BLOCK_Z0_MAX_X,BLOCK_Z0_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case BLOCK_Z_NUM-1:
-					if(is_collision_wall(&tmp,BLOCK_Z1_MIN_X,BLOCK_Z1_MAX_X,BLOCK_Z1_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_Z1_MIN_X,BLOCK_Z1_MAX_X,BLOCK_Z1_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
@@ -416,22 +465,26 @@ static BOOL can_move_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block,i
 		case BLOCK_T:
 			switch(bck->number){
 				case 0:
-					if(is_collision_wall(&tmp,BLOCK_T0_MIN_X,BLOCK_T0_MAX_X,BLOCK_T0_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_T0_MIN_X,BLOCK_T0_MAX_X,BLOCK_T0_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case 1:
-					if(is_collision_wall(&tmp,BLOCK_T1_MIN_X,BLOCK_T1_MAX_X,BLOCK_T1_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_T1_MIN_X,BLOCK_T1_MAX_X,BLOCK_T1_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case 2:
-					if(is_collision_wall(&tmp,BLOCK_T2_MIN_X,BLOCK_T2_MAX_X,BLOCK_T2_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_T2_MIN_X,BLOCK_T2_MAX_X,BLOCK_T2_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
 				case BLOCK_T_NUM-1:
-					if(is_collision_wall(&tmp,BLOCK_T3_MIN_X,BLOCK_T3_MAX_X,BLOCK_T3_MAX_Y)==TRUE){
+					if(is_collision_wall(&tmp,BLOCK_T3_MIN_X,BLOCK_T3_MAX_X,BLOCK_T3_MAX_Y)==TRUE||\
+						is_collision_block(pg,&tmp)==TRUE){
 						return FALSE;
 					}
 					break;
@@ -456,7 +509,7 @@ static int add_block_to_grid(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block
 	if(bck->y+y-1>=0){
 		for(y=0; y<GRID_LEN; y++){
 			for(x=0; x<GRID_LEN; x++){
-				if(bck->blck[y*GRID_LEN+x]=='1'){
+				if(bck->blck[y*GRID_LEN+x]=='1'&&pg[bck->y+y-1][bck->x+x-1].value!='1'){
 						pg[bck->y+y-1][bck->x+x-1].value='1';
 				}
 			}
@@ -465,6 +518,207 @@ static int add_block_to_grid(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block
 		return TTRS_FAILED;
 	}
 	
+	return TTRS_SUCCESS;
+}
+
+static int  remove_block_layer(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block)
+{
+	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
+	const block_t *bck=block;
+	int rm_layer=0;
+	int num=0;
+	if(NULL==pg||NULL==bck){
+		return TTRS_FAILED;
+	}  
+	num=get_remove_layer_num(pg,bck);
+	//just for test 
+	mvwprintw(stdscr,2,1,"%2d",num);
+	wrefresh(stdscr);
+	nodelay(stdscr,FALSE);
+	wgetch(stdscr);
+	nodelay(stdscr,TRUE);
+	if(num!=0){
+		remove_layer(pg,bck,num);
+	}
+#if 1
+	do{
+		if((num&1)==1){
+			rm_layer++;
+		}
+		num=num>>1;
+	}while(num>0);
+#endif
+	return rm_layer;
+}
+
+static int get_remove_layer_num(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block)
+{
+	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
+	const block_t *bck=block;
+	int ret_num=0;//Binary number:0000~0b1111
+	int x,y;
+	if(NULL==pg||NULL==bck){
+		return TTRS_FAILED;
+	}  
+	int max_y=(bck->y-1+GRID_LEN)>(TETRIS_HEIGHT)?(TETRIS_HEIGHT):(bck->y-1+GRID_LEN);
+	for(y=bck->y-1; y<max_y; y++){
+		for(x=0;x<TETRIS_WIDTH;x++){
+			if(pg[y][x].value!='1'){
+				break;
+			}else {
+				if(x==TETRIS_WIDTH-1){
+					ret_num += 1<<(y-(bck->y-1));
+				}
+			}
+			
+		}
+	}
+
+	return ret_num;
+}
+
+static int remove_layer(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block, int layer)
+{
+	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
+	const block_t *bck=block;
+	int layer_num=layer;
+	if(NULL==pg||NULL==bck){
+		return TTRS_FAILED;
+	}
+	int x;
+	int y;
+	y=bck->y-1;
+	if((layer_num&1)==1){
+		for(x=0; x<TETRIS_WIDTH; x++){
+			pg[y][x].value='x';
+		}
+	}
+	
+	return TTRS_SUCCESS;
+}
+
+static int remove_layer_from_grid(grid_t (*pgrid)[TETRIS_WIDTH],int layer_y)
+{
+
+}
+
+static int set_prompt(const block_t *block, prompt_t *prompt, int remove_layer)
+{
+	const block_t *bck=block;
+	prompt_t *ppt=prompt;
+	int rm_layer=(remove_layer>=REMOVE_MIN_LAYER&&remove_layer<=REMOVE_MAX_LAYER)?(remove_layer):(REMOVE_MIN_LAYER);
+	
+	if(NULL==ppt||NULL==bck){
+		return TTRS_FAILED;
+	}
+	
+	ppt->lines_value  += rm_layer;
+	switch(rm_layer){
+		case REMOVE_MIN_LAYER:	
+			switch(bck->type){
+				case BLOCK_I:
+					switch(bck->number){
+						case 0:
+							ppt->score_value += (BLOCK_I0_MAX_Y-BLOCK_I0_MIN_Y+1);
+							break;
+						case BLOCK_I_NUM-1:
+							ppt->score_value += (BLOCK_I1_MAX_Y-BLOCK_I1_MAX_Y+1);
+							break;
+					}
+					break;
+				case BLOCK_J:
+					switch(bck->number){
+						case 0:
+							ppt->score_value += (BLOCK_J0_MAX_Y-BLOCK_J0_MIN_Y+1);
+							break;
+						case 1:
+							ppt->score_value += (BLOCK_J1_MAX_Y-BLOCK_J1_MIN_Y+1);
+							break;
+						case 2:
+							ppt->score_value += (BLOCK_J2_MAX_Y-BLOCK_J2_MIN_Y+1);
+							break;
+						case BLOCK_J_NUM-1:
+							ppt->score_value += (BLOCK_J3_MAX_Y-BLOCK_J3_MIN_Y+1);
+							break;
+					}
+					break;
+				case BLOCK_L:
+					switch(bck->number){
+						case 0:
+							ppt->score_value += (BLOCK_L0_MAX_Y-BLOCK_L0_MIN_Y+1);
+							break;
+						case 1:
+							ppt->score_value += (BLOCK_L1_MAX_Y-BLOCK_L1_MIN_Y+1);
+							break;
+						case 2:
+							ppt->score_value += (BLOCK_L2_MAX_Y-BLOCK_L2_MIN_Y+1);
+							break;
+						case BLOCK_L_NUM-1:
+							ppt->score_value += (BLOCK_L3_MAX_Y-BLOCK_L3_MIN_Y+1);
+							break;
+					}
+					break;
+				case BLOCK_O:
+					ppt->score_value += (BLOCK_O0_MAX_Y-BLOCK_O0_MIN_Y+1);
+					break;
+				case BLOCK_S:
+					switch(bck->number){
+						case 0:
+							ppt->score_value += (BLOCK_S0_MAX_Y-BLOCK_S0_MIN_Y+1);
+							break;
+						case BLOCK_S_NUM-1:
+							ppt->score_value += (BLOCK_S1_MAX_Y-BLOCK_S1_MIN_Y+1);
+							break;
+					}
+					break;
+				case BLOCK_Z:
+					switch(bck->number){
+						case 0:
+							ppt->score_value += (BLOCK_Z0_MAX_Y-BLOCK_Z0_MIN_Y+1);
+							break;
+						case BLOCK_Z_NUM-1:
+							ppt->score_value += (BLOCK_Z1_MAX_Y-BLOCK_Z1_MIN_Y+1);
+							break;
+					}
+					break;
+				case BLOCK_T:
+					switch(bck->number){
+						case 0:
+							ppt->score_value += (BLOCK_T0_MAX_Y-BLOCK_T0_MIN_Y+1);
+							break;
+						case 1:
+							ppt->score_value += (BLOCK_T1_MAX_Y-BLOCK_T1_MIN_Y+1);
+							break;
+						case 2:
+							ppt->score_value += (BLOCK_T2_MAX_Y-BLOCK_T2_MIN_Y+1);
+							break;
+						case BLOCK_T_NUM-1:
+							ppt->score_value += (BLOCK_T3_MAX_Y-BLOCK_T3_MIN_Y+1);
+							break;
+					}
+					break;
+				default:
+					break;
+			}
+			break;
+		case 1:
+			ppt->score_value += 1*(ppt->level_value+REMOVE_MAX_LAYER);
+			break;
+		case 2:
+			ppt->score_value += 2*(ppt->level_value+REMOVE_MAX_LAYER);
+			break;
+		case 3:
+			ppt->score_value += 3*(ppt->level_value+REMOVE_MAX_LAYER);
+			break;
+		case REMOVE_MAX_LAYER:
+			ppt->score_value += 4*(ppt->level_value+REMOVE_MAX_LAYER);
+			break;
+		default:
+			break;
+		}
+
+		ppt->level_value = ((ppt->lines_value/(TETRIS_HEIGHT+ppt->level_value))==ppt->level_value)
+			?(ppt->level_value):(ppt->lines_value/(TETRIS_HEIGHT+ppt->level_value));
 	return TTRS_SUCCESS;
 }
 
@@ -622,16 +876,31 @@ int handle_tetris(tetris_t *tetris)
 {
 	tetris_t *ttrs=tetris;
 	block_t *bck=NULL;
-	//just for test
-	ttrs->prompt.level_value++;
-	ttrs->prompt.lines_value +=2;
-	ttrs->prompt.score_value +=3;
-
+	int num=0;
+	char lose[]="Sorry, you lose!";
+	int ret;
+	
 	//just for test
 	pthread_mutex_lock(&mutex);
 	bck=move_block(&ttrs->grid[0],&ttrs->cur_block,DIR_DOWN);
 	if(NULL==bck){
-		add_block_to_grid(&ttrs->grid[0],&ttrs->cur_block);
+		ret=add_block_to_grid(&ttrs->grid[0],&ttrs->cur_block);
+		if(TTRS_FAILED==ret){
+			ttrs->status=STATUS_QUIT;
+			if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_PROMPT)|A_BOLD);}
+			mvwprintw(ttrs->scr.win,ttrs->scr.begin_y+ttrs->scr.nlines/2,
+				ttrs->scr.begin_x+ttrs->scr.ncols/2-strlen(lose)/2,"%s",lose);
+			if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_PROMPT)|A_BOLD);}
+			wrefresh(ttrs->scr.win);
+			nodelay(ttrs->scr.win,FALSE);
+			wgetch(ttrs->scr.win);
+			nodelay(ttrs->scr.win,TRUE);
+		}else{
+			num=remove_block_layer(&ttrs->grid[0],&ttrs->cur_block);
+			if(num>-1){
+				set_prompt(&ttrs->cur_block,&ttrs->prompt,num);
+			}
+		}
 		current_block(&ttrs->scr,&ttrs->cur_block,&ttrs->next_block);
 		next_block(&ttrs->scr,&ttrs->next_block);
 	}

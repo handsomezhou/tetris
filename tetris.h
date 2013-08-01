@@ -196,6 +196,9 @@
 #define BLOCK_T3_MAX_X		2
 #define BLOCK_T3_MAX_Y		3
 
+#define REMOVE_MAX_LAYER	4
+#define REMOVE_MIN_LAYER	0
+
 #define KEY_ESC			27
 #define MIN_UNIT_TIME	100000 //us
 
