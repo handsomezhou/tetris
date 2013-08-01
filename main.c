@@ -38,7 +38,8 @@ int main(int argc, char *argv[])
 			handle_tetris(tetris);
 		}
 		paint_tetris(tetris);
-		usleep(1200000);
+		//usleep(1200000);
+		usleep(300000);
 	}
 
 	//wait thread tid_input finish

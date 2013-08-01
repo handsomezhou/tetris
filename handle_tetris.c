@@ -135,7 +135,7 @@ static int get_random_block()
 	int num;
 
 	//just for test
-#if 0
+#if 1
 	num=rand()%BLOCK_TOTAL_NUM;
 #else
 	num=0;
@@ -585,13 +585,28 @@ static int remove_layer(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block, int
 	if(NULL==pg||NULL==bck){
 		return TTRS_FAILED;
 	}
-	int x;
 	int y;
+	
 	y=bck->y-1;
+#if 0
 	if((layer_num&1)==1){
-		for(x=0; x<TETRIS_WIDTH; x++){
-			pg[y][x].value='x';
-		}
+		remove_layer_from_grid(pg,y);
+	}
+#else
+	if(((y+0)<TETRIS_HEIGHT)&&(((layer>>0)&1)==1)){
+		remove_layer_from_grid(pg,y+1);
+	}
+#endif
+	if(((y+1)<TETRIS_HEIGHT)&&(((layer>>1)&1)==1)){
+		remove_layer_from_grid(pg,y+1);
+	}
+	
+	if(((y+2)<TETRIS_HEIGHT)&&(((layer>>2)&1)==1)){
+		remove_layer_from_grid(pg,y+2);
+	}
+	
+	if(((y+3)<TETRIS_HEIGHT)&&(((layer>>3)&1)==1)){
+		remove_layer_from_grid(pg,y+3);
 	}
 	
 	return TTRS_SUCCESS;
@@ -599,7 +614,24 @@ static int remove_layer(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block, int
 
 static int remove_layer_from_grid(grid_t (*pgrid)[TETRIS_WIDTH],int layer_y)
 {
+	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
+	if(NULL==pg){
+		return TTRS_FAILED;
+	}
 
+	int y,x;
+	y=layer_y;
+	for(y=layer_y; y>0; y--){
+		for(x=0; x<TETRIS_WIDTH; x++){
+			pg[y][x].value=pg[y-1][x].value;
+		}
+	}
+
+	for(x=0; x<TETRIS_WIDTH; x++){
+		pg[y][x].value='0';	//y=0
+	}
+	
+	return TTRS_SUCCESS;
 }
 
 static int set_prompt(const block_t *block, prompt_t *prompt, int remove_layer)
