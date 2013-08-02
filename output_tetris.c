@@ -38,7 +38,6 @@ void paint_tetris(tetris_t *tetris)
 
 void draw_confirm_exit()
 {
-	
 		char confirm_quit[]="Please press key 'y' or 'Y' to confirm exit the program,";
 		char confirm_continue[]="press others key to continue!";
 	
@@ -50,6 +49,22 @@ void draw_confirm_exit()
 		if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_PROMPT)|A_BOLD);}
 
 		wrefresh(stdscr);
+}
+
+void draw_help_info()
+{
+	char ttrs_title[]="Tetris help";
+	char ttrs_rotate[]="Rotate:";
+	char ttrs_right[] ="Right :";
+	char ttrs_down[]  ="Down  :";
+	char ttrs_left[]  ="Left  :";
+	char ttrs_start[] ="Start :";
+	char ttrs_pause[] ="Pause :";
+	char ttrs_quit[]  ="Quit  :";
+	char ttrs_help[]  ="Help  :";
+	char ttrs_continue[]="Press any key to continue!";
+	werase(stdscr);
+	
 }
 
 static void draw_screen(screen_t *screen)

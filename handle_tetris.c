@@ -197,7 +197,9 @@ static BOOL confirm_exit()
 	int ch=-1;
 	draw_confirm_exit();
 	nodelay(stdscr,FALSE);
+	echo();
 	ch=wgetch(stdscr);
+	noecho();
 	nodelay(stdscr,TRUE);
 	if('Y'==ch||'y'==ch){
 		return TRUE;
@@ -960,6 +962,10 @@ int deal_key_event(grid_t (*pgrid)[TETRIS_WIDTH],block_t *block, status_t *statu
 
 	switch(key){
 		case KEY_UP://Rotate
+		case 'W':
+		case 'w':
+		case 'I':
+		case 'i':
 			if(STATUS_PAUSE!=*sts){
 				pthread_mutex_lock(&mutex);
 				rotate_block(pg,bck);
@@ -968,6 +974,10 @@ int deal_key_event(grid_t (*pgrid)[TETRIS_WIDTH],block_t *block, status_t *statu
 			break;
 			
 		case KEY_RIGHT://Right
+		case 'D':
+		case 'd':
+		case 'L':
+		case 'l':
 			if(STATUS_PAUSE!=*sts){
 				pthread_mutex_lock(&mutex);
 				move_block(pg,bck,DIR_RIGHT);
@@ -977,6 +987,10 @@ int deal_key_event(grid_t (*pgrid)[TETRIS_WIDTH],block_t *block, status_t *statu
 			break;
 			
 		case KEY_DOWN://Down
+		case 'S':
+		case 's':
+		case 'K':
+		case 'k':
 			if(STATUS_PAUSE!=*sts){
 				pthread_mutex_lock(&mutex);
 				move_block(pg,bck,DIR_DOWN);
@@ -986,6 +1000,10 @@ int deal_key_event(grid_t (*pgrid)[TETRIS_WIDTH],block_t *block, status_t *statu
 			break;
 			
 		case KEY_LEFT://Left
+		case 'A':
+		case 'a':
+		case 'J':
+		case 'j':
 			if(STATUS_PAUSE!=*sts){
 				pthread_mutex_lock(&mutex);
 				move_block(pg,bck,DIR_LEFT);

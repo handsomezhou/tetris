@@ -191,6 +191,7 @@ static int init_screen(screen_t *screen)
 	}
 	//init ncurses
 	initscr();
+	noecho();
 	cbreak();
 	curs_set(FALSE);
 	clear();
