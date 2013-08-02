@@ -362,6 +362,7 @@ static BOOL can_move_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block,i
 		return FALSE;
 	}
 #if 0
+	//This code must not be added
 	if(tmp.y==bck->y&&tmp.x==bck->x){
 		return TRUE;
 	}
