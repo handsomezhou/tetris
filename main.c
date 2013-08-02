@@ -35,10 +35,15 @@ int main(int argc, char *argv[])
 	}
 	
 	while(tetris->status!=STATUS_QUIT){
-		if(STATUS_PAUSE!=tetris->status&&STATUS_CONFIRM_QUIT!=tetris->status){
+		if(STATUS_PAUSE!=tetris->status&&STATUS_CONFIRM_QUIT!=tetris->status&&\
+			STATUS_OTHERS!=tetris->status){
 			handle_tetris(tetris);
 		}
-		paint_tetris(tetris);
+		
+		if(STATUS_OTHERS!=tetris->status){
+			paint_tetris(tetris);
+		}
+		
 		delay_time=(TIME_MAX_DELAY-tetris->prompt.level_value*TIME_MIN_UNIT);
 		usleep((delay_time>0)?(delay_time):(TIME_MIN_UNIT));
 	}

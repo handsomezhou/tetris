@@ -1012,23 +1012,31 @@ int deal_key_event(grid_t (*pgrid)[TETRIS_WIDTH],block_t *block, status_t *statu
 			
 			break;
 
-		case 'S'://Start
-		case 's':
-			if(STATUS_START!=*sts){
-				*sts=STATUS_START;
+		case 'B'://Begin
+		case 'b':
+			if(STATUS_BEGIN!=*sts){
+				*sts=STATUS_BEGIN;
 			}
 			break;
 			
-		case ' '://Pause
+		case ' '://Pause 
 		case 'P':
 		case 'p':
 			if(STATUS_PAUSE!=*sts){
 				*sts=STATUS_PAUSE;
 			}else{
-				*sts=STATUS_START;
+				*sts=STATUS_BEGIN;
 			}
 			break;
 
+		case 'H':
+		case 'h':
+			sts_tmp=*sts;
+			*sts=STATUS_OTHERS;
+			draw_help_info();
+			*sts=sts_tmp;
+			break;
+			
 		case KEY_ESC://Quit
 		case 'Q':
 		case 'q':
@@ -1057,7 +1065,7 @@ int deal_mouse_event(const screen_t *screen, status_t *status, const MEVENT *mev
 
 	if(evt->y==scr->begin_y+POS_START_Y){
 		switch(*sts){
-			case STATUS_START:
+			case STATUS_BEGIN:
 			case STATUS_INIT:
 				if(evt->x>=scr->begin_x+POS_START_X&&evt->x<scr->begin_x+POS_START_X+LEN_START_STR-1){
 					*sts=STATUS_PAUSE;
@@ -1065,7 +1073,7 @@ int deal_mouse_event(const screen_t *screen, status_t *status, const MEVENT *mev
 				break;
 			case STATUS_PAUSE:
 				if(evt->x>=scr->begin_x+POS_PAUSE_X&&evt->x<scr->begin_x+POS_PAUSE_X+LEN_PAUSE_STR-1){
-					*sts=STATUS_START;
+					*sts=STATUS_BEGIN;
 				}
 				break;
 			default:

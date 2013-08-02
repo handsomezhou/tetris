@@ -60,7 +60,7 @@
 #define POS_SCORE_Y		(POS_LINES_Y+2)
 #define POS_SCORE_X		POS_LINES_X
 
-#define STR_START		"START"
+#define STR_START		"BEGIN"
 #define LEN_START_STR	sizeof(STR_START)
 #define POS_START_Y		(POS_SCORE_Y+3)
 #define POS_START_X		(POS_SCORE_X+(TETRIS_WIDTH-strlen(STR_START))/2)
@@ -286,10 +286,11 @@ typedef enum direction{
 
 typedef enum status{
 	STATUS_INIT,
-	STATUS_START,
+	STATUS_BEGIN,
 	STATUS_PAUSE,
 	STATUS_CONFIRM_QUIT,
 	STATUS_QUIT,
+	STATUS_OTHERS,
 }status_t;
 
 typedef enum event{

@@ -8,6 +8,7 @@
 #include <signal.h>
 #include "tetris.h"
 #include "handle_tetris.h"
+#include "output_tetris.h"
 
 
 char blck[BLOCK_TOTAL_NUM][GRID_LEN*GRID_LEN+1]=
@@ -158,6 +159,9 @@ int init_tetris(tetris_t **tetris)
 
 		signal(SIGINT,interrupt_info);
 		pthread_mutex_init(&mutex,NULL);
+
+		//show help info
+		draw_help_info();
 		
 		return TTRS_SUCCESS;
 		

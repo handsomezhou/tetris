@@ -3,6 +3,7 @@
   */
 
 #include <string.h>
+#include <unistd.h>
 #include "handle_tetris.h"
 #include "output_tetris.h"
 
@@ -54,17 +55,52 @@ void draw_confirm_exit()
 void draw_help_info()
 {
 	char ttrs_title[]="Tetris help";
-	char ttrs_rotate[]="Rotate:";
-	char ttrs_right[] ="Right :";
-	char ttrs_down[]  ="Down  :";
-	char ttrs_left[]  ="Left  :";
-	char ttrs_start[] ="Start :";
-	char ttrs_pause[] ="Pause :";
-	char ttrs_quit[]  ="Quit  :";
-	char ttrs_help[]  ="Help  :";
-	char ttrs_continue[]="Press any key to continue!";
+	char ttrs_rotate[]="Rotate:[W] [w] [I] [i] [Arrow keys UP] ";
+	char ttrs_right[] ="Right :[D] [d] [L] [l] [Arrow keys Right]";
+	char ttrs_down[]  ="Down  :[S] [s] [K] [k] [Arrow keys Down]";
+	char ttrs_left[]  ="Left  :[A] [a] [J] [j] [Arrow keys Left]";
+	char ttrs_begin[] ="begin :[B] [b]";
+	char ttrs_pause[] ="Pause :[P] [p] [Spacebar]";
+	char ttrs_quit[]  ="Quit  :[Q] [q] [Esc]";
+	char ttrs_help[]  ="Help  :[H] [h]";
+	char ttrs_continue[]="Press any key or click mouse to continue!";
+	int y=0;
+	int x=1;
+	int scr_y;
+	int scr_x;
+	int ch=ERR;
+	nodelay(stdscr,TRUE);
 	werase(stdscr);
+	while(ch==ERR){
+		y=0;
+		getmaxyx(stdscr,scr_y,scr_x);
+		wclear(stdscr);
+		if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_PROMPT)|A_BOLD);}
+		mvwprintw(stdscr,++y,(scr_x-strlen(ttrs_title))/2,"%s",ttrs_title);
+		y++;
+		mvwprintw(stdscr,++y,x,"%s",ttrs_rotate);
+		mvwprintw(stdscr,++y,x,"%s",ttrs_right);
+		mvwprintw(stdscr,++y,x,"%s",ttrs_down);
+		mvwprintw(stdscr,++y,x,"%s",ttrs_left);
+		mvwprintw(stdscr,++y,x,"%s",ttrs_begin);
+		mvwprintw(stdscr,++y,x,"%s",ttrs_pause);
+		mvwprintw(stdscr,++y,x,"%s",ttrs_quit);
+		mvwprintw(stdscr,++y,x,"%s",ttrs_help);
+		box(stdscr,0,0);
+		if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_PROMPT)|A_BOLD);}
+
+		y++;
+		if(has_colors()){attron(COLOR_PAIR(COLOR_BUTTON)|A_BOLD);}
+		mvwprintw(stdscr,((scr_y/2)>y)?(scr_y/2):(y),(scr_x-strlen(ttrs_continue))/2,"%s",ttrs_continue);
+		if(has_colors()){attroff(COLOR_PAIR(COLOR_BUTTON)|A_BOLD);}
+		
+		ch=wgetch(stdscr);
+		wrefresh(stdscr);
+		
+		usleep(TIME_MIN_UNIT*2);
+	}
 	
+	return;
 }
 
 static void draw_screen(screen_t *screen)
@@ -138,7 +174,7 @@ static void draw_prompt(const screen_t *screen, prompt_t *prompt,status_t status
 	
 	if(has_colors()){attron(COLOR_PAIR(COLOR_BUTTON)|A_BOLD);}
 	switch(sts){
-		case STATUS_START:
+		case STATUS_BEGIN:
 		case STATUS_INIT:
 			mvwprintw(scr->win,scr->begin_y+POS_PAUSE_Y,scr->begin_x+POS_PAUSE_X,\
 		"%s",ppt->pause);
