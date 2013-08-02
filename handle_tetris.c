@@ -14,17 +14,17 @@ static block_t *block_copy(block_t *dest, const block_t *src);
 static int get_random_block();
 static block_t *new_block(block_t *block);
 static BOOL confirm_exit();
-//static BOOL can_rotate(const grid_t (*pgrid)[TETRIS_WIDTH],const block_t *block);
 static block_t *rotate_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block);
 block_t *get_next_rotate_block(block_t *next_block, const block_t *cur_block);
 static block_t *move_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block, dir_t direction);
+static BOOL is_collision_wall(const block_t *block,int min_x,int max_x,int max_y);
+static BOOL is_collision_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block);
 static BOOL can_move_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block,int y, int x);
 static int add_block_to_grid(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block);
 static int  remove_block_layer(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block);
 static int get_remove_layer_num(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block);
 static int remove_layer(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block, int layer);
 static int remove_layer_from_grid(grid_t (*pgrid)[TETRIS_WIDTH],int layer_y);
-
 static int set_prompt(const block_t *block, prompt_t *prompt, int remove_layer);
 
 
@@ -132,15 +132,35 @@ static block_t *block_copy(block_t *dest, const block_t *src)
 
 static int get_random_block()
 {
+	int type;
 	int num;
+	int ret;
+	block_t tmp;
+	
+	type=rand()%BLOCK_TYPE_NUM;
+	num=rand()%BLOCK_SINGLE_MAX_NUM;
+	switch(type){
+		case BLOCK_O:
+			num=0;
+			break;
+		case BLOCK_I:
+		case BLOCK_S:
+		case BLOCK_Z:
+			num=num%2;
+			break;
+		case BLOCK_J:
+		case BLOCK_L:
+		case BLOCK_T:
+			num=num;
+			break;
+		default:break;
+	}
+	
+	tmp.type=type;
+	tmp.number=num;
+	ret=get_num_from_block(&tmp);
 
-	//just for test
-#if 1
-	num=rand()%BLOCK_TOTAL_NUM;
-#else
-	num=0;
-#endif
-	return num;
+	return ret;
 }
 
 static block_t *new_block(block_t *block)
@@ -194,8 +214,6 @@ static block_t *rotate_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block)
 	block_t *bck=block;
 	block_t *pbck=NULL;
 	block_t tmp;
-	int num;
-	BOOL bl=FALSE;
 
 	pbck=get_next_rotate_block(&tmp,bck);
 	if(NULL==pbck){
@@ -294,8 +312,6 @@ static block_t *move_block(grid_t (*pgrid)[TETRIS_WIDTH], block_t *block, dir_t 
 	return NULL;
 }
 
-static BOOL is_collision_wall(const block_t *block,int min_x,int max_x,int max_y);
-static BOOL is_collision_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block);
 static BOOL is_collision_wall(const block_t *block,int min_x,int max_x,int max_y)
 {
 	const block_t *bck=block;
@@ -313,7 +329,7 @@ static BOOL is_collision_wall(const block_t *block,int min_x,int max_x,int max_y
 static BOOL is_collision_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block)
 {
 	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
-	block_t *bck=block;
+	const block_t *bck=block;
 	int y,x;
 	if(NULL==pg||NULL==bck){
 		return TRUE;
@@ -336,7 +352,7 @@ static BOOL is_collision_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *blo
 static BOOL can_move_block(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block,int y, int x)
 {
 	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
-	block_t *bck=block;
+	const block_t *bck=block;
 	block_t tmp;
 	block_copy(&tmp,bck);
 	tmp.y=y;
@@ -511,6 +527,7 @@ static int add_block_to_grid(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block
 			for(x=0; x<GRID_LEN; x++){
 				if(bck->blck[y*GRID_LEN+x]=='1'&&pg[bck->y+y-1][bck->x+x-1].value!='1'){
 						pg[bck->y+y-1][bck->x+x-1].value='1';
+						pg[bck->y+y-1][bck->x+x-1].type=bck->type;
 				}
 			}
 		}
@@ -531,23 +548,17 @@ static int  remove_block_layer(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *blo
 		return TTRS_FAILED;
 	}  
 	num=get_remove_layer_num(pg,bck);
-	//just for test 
-	mvwprintw(stdscr,2,1,"%2d",num);
-	wrefresh(stdscr);
-	nodelay(stdscr,FALSE);
-	wgetch(stdscr);
-	nodelay(stdscr,TRUE);
+
 	if(num!=0){
 		remove_layer(pg,bck,num);
 	}
-#if 1
+	
 	do{
 		if((num&1)==1){
 			rm_layer++;
 		}
-		num=num>>1;
-	}while(num>0);
-#endif
+	}while((num=num>>1)>0);
+
 	return rm_layer;
 }
 
@@ -555,7 +566,7 @@ static int get_remove_layer_num(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *bl
 {
 	grid_t (*pg)[TETRIS_WIDTH]=pgrid;
 	const block_t *bck=block;
-	int ret_num=0;//Binary number:0000~0b1111
+	int ret_num=0;//Binary number:0000~1111
 	int x,y;
 	if(NULL==pg||NULL==bck){
 		return TTRS_FAILED;
@@ -588,24 +599,19 @@ static int remove_layer(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block, int
 	int y;
 	
 	y=bck->y-1;
-#if 0
-	if((layer_num&1)==1){
-		remove_layer_from_grid(pg,y);
-	}
-#else
-	if(((y+0)<TETRIS_HEIGHT)&&(((layer>>0)&1)==1)){
+	if(((y+0)<TETRIS_HEIGHT)&&(((layer_num>>0)&1)==1)){
 		remove_layer_from_grid(pg,y+1);
 	}
-#endif
-	if(((y+1)<TETRIS_HEIGHT)&&(((layer>>1)&1)==1)){
+
+	if(((y+1)<TETRIS_HEIGHT)&&(((layer_num>>1)&1)==1)){
 		remove_layer_from_grid(pg,y+1);
 	}
 	
-	if(((y+2)<TETRIS_HEIGHT)&&(((layer>>2)&1)==1)){
+	if(((y+2)<TETRIS_HEIGHT)&&(((layer_num>>2)&1)==1)){
 		remove_layer_from_grid(pg,y+2);
 	}
 	
-	if(((y+3)<TETRIS_HEIGHT)&&(((layer>>3)&1)==1)){
+	if(((y+3)<TETRIS_HEIGHT)&&(((layer_num>>3)&1)==1)){
 		remove_layer_from_grid(pg,y+3);
 	}
 	
@@ -761,10 +767,10 @@ void interrupt_info(int sign)
 	
 	int scr_y,scr_x;
 	getmaxyx(stdscr,scr_y,scr_x);
-	if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_PROMPT));}
+	if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_PROMPT)|A_BOLD);}
 	mvwprintw(stdscr,scr_y/2,((scr_x-strlen(info_key))/2>0)?((scr_x-strlen(info_key))/2):(1),"%s",info_key);
 	mvwprintw(stdscr,scr_y/2+1,((scr_x-strlen(info_mouse))/2>0)?((scr_x-strlen(info_mouse))/2):(1),"%s",info_mouse);
-	if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_PROMPT));}
+	if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_PROMPT)|A_BOLD);}
 
 	usleep(3000000);
 }
@@ -912,7 +918,6 @@ int handle_tetris(tetris_t *tetris)
 	char lose[]="Sorry, you lose!";
 	int ret;
 	
-	//just for test
 	pthread_mutex_lock(&mutex);
 	bck=move_block(&ttrs->grid[0],&ttrs->cur_block,DIR_DOWN);
 	if(NULL==bck){

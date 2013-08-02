@@ -146,15 +146,15 @@ int init_tetris(tetris_t **tetris)
 		if(TTRS_FAILED==ret){
 			break;
 		}
-		
-		//just for test
+
+		//init current block and next block
 		next_block(&(*ttrs)->scr,&(*ttrs)->next_block);
 		current_block(&(*ttrs)->scr,&(*ttrs)->cur_block,&(*ttrs)->next_block);
 		next_block(&(*ttrs)->scr,&(*ttrs)->next_block);
 		(*ttrs)->dir=DIR_NONE;
 		(*ttrs)->status=STATUS_INIT;
 		(*ttrs)->event=EVENT_NONE;
-		(*ttrs)->min_unit_time=MIN_UNIT_TIME;
+		(*ttrs)->min_unit_time=TIME_MIN_UNIT;
 
 		signal(SIGINT,interrupt_info);
 		pthread_mutex_init(&mutex,NULL);
@@ -192,29 +192,25 @@ static int init_screen(screen_t *screen)
 	//init ncurses
 	initscr();
 	cbreak();
-
-	//just for test
-	curs_set(TRUE);
+	curs_set(FALSE);
 	clear();
 	if(has_colors()){
 		start_color();
 
-		init_pair(COLOR_I,COLOR_MAGENTA,COLOR_BLACK);
-		init_pair(COLOR_J,COLOR_RED,COLOR_BLACK);
+		init_pair(COLOR_I,COLOR_RED,COLOR_BLACK);
+		init_pair(COLOR_J,COLOR_BLUE,COLOR_BLACK);
 		init_pair(COLOR_L,COLOR_GREEN,COLOR_BLACK);
 		init_pair(COLOR_O,COLOR_YELLOW,COLOR_BLACK);
-		init_pair(COLOR_S,COLOR_BLUE,COLOR_BLACK);
-		init_pair(COLOR_Z,COLOR_MAGENTA,COLOR_BLACK);
-		init_pair(COLOR_T,COLOR_BLACK,COLOR_BLACK);
+		init_pair(COLOR_S,COLOR_WHITE,COLOR_BLACK);
+		init_pair(COLOR_Z,COLOR_CYAN,COLOR_BLACK);
+		init_pair(COLOR_T,COLOR_MAGENTA,COLOR_BLACK);
 
 		init_pair(COLOR_SCREEN,COLOR_BLUE,COLOR_BLUE);
 		init_pair(COLOR_ERROR_PROMPT,COLOR_RED,COLOR_WHITE);
 		init_pair(COLOR_NORMAL_PROMPT,COLOR_GREEN,COLOR_BLACK);
 		init_pair(COLOR_BUTTON,COLOR_YELLOW,COLOR_GREEN);
 		init_pair(COLOR_TITLE,COLOR_GREEN,COLOR_BLACK);
-
-		//just fot test
-		init_pair(COLOR_TEST,COLOR_YELLOW,COLOR_RED);
+		
 	}
 	getmaxyx(stdscr,max_y,max_x);
 	scr->win=stdscr;
@@ -323,14 +319,6 @@ static int init_prompt(prompt_t *prompt)
 
 	memset(ppt->title,0,LEN_TITLE_STR);
 	strncpy(ppt->title,STR_TITLE,LEN_TITLE_STR);
-#if 0//just for test
-	mvwprintw(stdscr,1,1,"%d-[%s]",LEN_LEVEL_SHOW,ppt->level_show);
-	mvwprintw(stdscr,2,1,"%d-[%s]",LEN_LEVEL_SHOW,ppt->lines_show);
-	mvwprintw(stdscr,3,1,"%d-[%s]",LEN_LEVEL_SHOW,ppt->score_show);
-	nodelay(stdscr,FALSE);
-	wgetch(stdscr);
-	nodelay(stdscr,TRUE);
-#endif
 
 	return TTRS_SUCCESS;
 }

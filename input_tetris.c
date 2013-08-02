@@ -25,7 +25,6 @@ void *input_tetris(void *arg)
 				if(getmouse(&mevent)!=OK){
 					return NULL;
 				}else{
-					mvwprintw(ttrs->scr.win,3,1,"%7s","mouse");
 					switch(mevent.bstate){
 						case BUTTON1_CLICKED:
 						case BUTTON1_TRIPLE_CLICKED:
@@ -37,7 +36,6 @@ void *input_tetris(void *arg)
 					}
 				}
 			}else{//key event
-				mvwprintw(ttrs->scr.win,1,1,"%s:%4d","key:",ch);
 				deal_key_event(&ttrs->grid[0],&ttrs->cur_block,&ttrs->status,ch);
 			}
 		}

@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
 {
 	tetris_t *tetris=NULL;
 	int ret=TTRS_FAILED;
+	int delay_time;
 	pthread_t tid_input=-1;
 	
 	srand((unsigned int)(time(NULL)));
@@ -38,8 +39,8 @@ int main(int argc, char *argv[])
 			handle_tetris(tetris);
 		}
 		paint_tetris(tetris);
-		//usleep(1200000);
-		usleep(300000);
+		delay_time=(TIME_MAX_DELAY-tetris->prompt.level_value*TIME_MIN_UNIT);
+		usleep((delay_time>0)?(delay_time):(TIME_MIN_UNIT));
 	}
 
 	//wait thread tid_input finish

@@ -16,8 +16,6 @@
 
 #define GRID_LEN	4
 
-#define BLOCK_TOTAL_NUM	19	//BLOCK_I_NUM+...+BLOCK_T_NUM
-
 #define BLOCK_INIT_X		0
 #define BLOCK_INIT_Y		0
 
@@ -30,8 +28,7 @@
 #define TTRS_SUCCESS	0
 #define TTRS_FAILED		-1
 
-#define PAINT_SCREEN_Y		'#'
-#define PAINT_SCREEN_X		'#'
+#define PAINT_SCREEN_WALL		'#'
 #define PAINT_BLOCK_UNIT 	'o'
 
 #define POS_NEXT_BLOCK_Y 	1
@@ -83,15 +80,18 @@
 #define POS_TITLE_Y		(POS_QUIT_Y+3)
 #define POS_TITLE_X		(POS_SCORE_X+(TETRIS_WIDTH-strlen(STR_TITLE))/2)
 
-//#define LEN_TITLE
+#define BLOCK_TOTAL_NUM	19	//BLOCK_I_NUM+...+BLOCK_T_NUM
+#define BLOCK_TYPE_NUM	7
 
-#define BLOCK_I_NUM 2
-#define BLOCK_J_NUM 4
-#define BLOCK_L_NUM 4
-#define BLOCK_O_NUM 1
-#define BLOCK_S_NUM 2
-#define BLOCK_Z_NUM 2
-#define BLOCK_T_NUM 4
+#define BLOCK_I_NUM 	2
+#define BLOCK_J_NUM 	4
+#define BLOCK_L_NUM 	4
+#define BLOCK_O_NUM 	1
+#define BLOCK_S_NUM 	2
+#define BLOCK_Z_NUM 	2
+#define BLOCK_T_NUM 	4
+#define BLOCK_SINGLE_MAX_NUM	4
+
 
 #define BLOCK_I_START_NUM	0
 #define BLOCK_J_START_NUM	(BLOCK_I_START_NUM+BLOCK_I_NUM)
@@ -200,7 +200,8 @@
 #define REMOVE_MIN_LAYER	0
 
 #define KEY_ESC			27
-#define MIN_UNIT_TIME	100000 //us
+#define TIME_MIN_UNIT	100000 //us
+#define TIME_MAX_DELAY	1200000 //us
 
 #define TRUE	1
 #define FALSE	0
@@ -246,21 +247,19 @@ typedef enum block_type{
 }block_type_t;	//Tetris block type
 
 typedef enum color{
-	COLOR_I=0,
+	COLOR_I=1, 
 	COLOR_J,
 	COLOR_L,
 	COLOR_O,
 	COLOR_S,
 	COLOR_Z,
 	COLOR_T,
-
 	COLOR_SCREEN,
 	COLOR_ERROR_PROMPT,
 	COLOR_NORMAL_PROMPT,
 	COLOR_BUTTON,
 	COLOR_TITLE,
 	
-	COLOR_TEST,	//just for test
 }color_t;
 
 typedef struct grid{

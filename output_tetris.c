@@ -3,15 +3,16 @@
   */
 
 #include <string.h>
-//just for test
 #include "handle_tetris.h"
 #include "output_tetris.h"
 
 static void draw_screen(screen_t *screen);
 static void clear_screen(screen_t *screen);
 static void draw_prompt(const screen_t *screen, prompt_t *prompt,status_t status);
-//just for test
 static void draw_grid(const screen_t *screen,const grid_t (*pgrid)[TETRIS_WIDTH]);
+static void open_colors(block_type_t type);
+static void close_colors(block_type_t type);
+static void draw_block(const screen_t *screen, int start_y, int start_x,const block_t *block);
 static void draw_current_block(const screen_t *screen,const block_t *block);
 static void draw_next_block(const screen_t *screen,block_t *block);
 
@@ -43,10 +44,10 @@ void draw_confirm_exit()
 	
 		int scr_y,scr_x;
 		getmaxyx(stdscr,scr_y,scr_x);
-		if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_PROMPT));}
+		if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_PROMPT)|A_BOLD);}
 		mvwprintw(stdscr,scr_y/2,((scr_x-strlen(confirm_quit))/2>0)?((scr_x-strlen(confirm_quit))/2):(1),"%s",confirm_quit);
 		mvwprintw(stdscr,scr_y/2+1,((scr_x-strlen(confirm_continue))/2>0)?((scr_x-strlen(confirm_continue))/2):(1),"%s",confirm_continue);
-		if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_PROMPT));}
+		if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_PROMPT)|A_BOLD);}
 
 		wrefresh(stdscr);
 }
@@ -71,9 +72,9 @@ static void draw_screen(screen_t *screen)
 	for(y=scr->begin_y; y<max_y; y++){
 		for(x=scr->begin_x; x<max_x; x++){
 			if(y==scr->begin_y||y==max_y-1||x==scr->begin_x||x==max_x-1||x==scr->begin_x+TETRIS_WIDTH+1){
-				mvwaddch(scr->win,y,x,PAINT_SCREEN_X);
+				mvwaddch(scr->win,y,x,PAINT_SCREEN_WALL);
 			}else if(y==scr->begin_y+NEXT_BLOCK_HEIGHT&&x>scr->begin_x+TETRIS_WIDTH&&x<max_x-1){
-				mvwaddch(scr->win,y,x,PAINT_SCREEN_X);
+				mvwaddch(scr->win,y,x,PAINT_SCREEN_WALL);
 			}
 		}
 	}
@@ -110,14 +111,14 @@ static void draw_prompt(const screen_t *screen, prompt_t *prompt,status_t status
 	memset(ppt->score_show,0,LEN_LEVEL_SHOW);
 	snprintf(ppt->score_show,LEN_LEVEL_SHOW,"%s%5d",ppt->score_key,ppt->score_value);
 	
-	if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_PROMPT));}
+	if(has_colors()){attron(COLOR_PAIR(COLOR_NORMAL_PROMPT)|A_BOLD);}
 	mvwprintw(scr->win,scr->begin_y+POS_LEVEL_Y,scr->begin_x+POS_LEVEL_X,\
 		"%s",ppt->level_show);
 	mvwprintw(scr->win,scr->begin_y+POS_LINES_Y,scr->begin_x+POS_LINES_X,\
 		"%s",ppt->lines_show);
 	mvwprintw(scr->win,scr->begin_y+POS_SCORE_Y,scr->begin_x+POS_SCORE_X,\
 		"%s",ppt->score_show);
-	if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_PROMPT));}
+	if(has_colors()){attroff(COLOR_PAIR(COLOR_NORMAL_PROMPT)|A_BOLD);}
 
 	
 	if(has_colors()){attron(COLOR_PAIR(COLOR_BUTTON)|A_BOLD);}
@@ -158,12 +159,101 @@ static void draw_grid(const screen_t *screen, const grid_t (*pgrid)[TETRIS_WIDTH
 	}
 	for(y=scr->begin_y+1; y<scr->begin_y+1+TETRIS_HEIGHT; y++){
 		for(x=scr->begin_x+1; x<scr->begin_x+1+TETRIS_WIDTH; x++){
-			mvwprintw(scr->win,y,x,"%c",pg[y-(scr->begin_y+1)][x-(scr->begin_x+1)].value);
+			if(pg[y-(scr->begin_y+1)][x-(scr->begin_x+1)].value=='1'){
+				open_colors(pg[y-(scr->begin_y+1)][x-(scr->begin_x+1)].type);
+				mvwaddch(scr->win,y,x,PAINT_BLOCK_UNIT);
+				close_colors(pg[y-(scr->begin_y+1)][x-(scr->begin_x+1)].type);
+			}
 		}
 	}
 	
-
 	wrefresh(scr->win);
+	
+	return;
+}
+static void open_colors(block_type_t type)
+{
+	switch(type){
+		case BLOCK_I:
+			if(has_colors()){attron(COLOR_PAIR(COLOR_I)|A_BOLD);}
+			break;
+		case BLOCK_J:
+			if(has_colors()){attron(COLOR_PAIR(COLOR_J)|A_BOLD);}
+			break;
+		case BLOCK_L:
+			if(has_colors()){attron(COLOR_PAIR(COLOR_L)|A_BOLD);}
+			break;
+		case BLOCK_O:
+			if(has_colors()){attron(COLOR_PAIR(COLOR_O)|A_BOLD);}
+			break;
+		case BLOCK_S:
+			if(has_colors()){attron(COLOR_PAIR(COLOR_S)|A_BOLD);}
+			break;
+		case BLOCK_Z:
+			if(has_colors()){attron(COLOR_PAIR(COLOR_Z)|A_BOLD);}
+			break;
+		case BLOCK_T:
+			if(has_colors()){attron(COLOR_PAIR(COLOR_T)|A_BOLD);}
+			break;
+		default:
+			break;
+	}
+	
+	return;
+}
+
+static void close_colors(block_type_t type)
+{
+	switch(type){
+			case BLOCK_I:
+				if(has_colors()){attroff(COLOR_PAIR(COLOR_I)|A_BOLD);}
+				break;
+			case BLOCK_J:
+				if(has_colors()){attroff(COLOR_PAIR(COLOR_J)|A_BOLD);}
+				break;
+			case BLOCK_L:
+				if(has_colors()){attroff(COLOR_PAIR(COLOR_L)|A_BOLD);}
+				break;
+			case BLOCK_O:
+				if(has_colors()){attroff(COLOR_PAIR(COLOR_O)|A_BOLD);}
+				break;
+			case BLOCK_S:
+				if(has_colors()){attroff(COLOR_PAIR(COLOR_S)|A_BOLD);}
+				break;
+			case BLOCK_Z:
+				if(has_colors()){attroff(COLOR_PAIR(COLOR_Z)|A_BOLD);}
+				break;
+			case BLOCK_T:
+				if(has_colors()){attroff(COLOR_PAIR(COLOR_T)|A_BOLD);}
+				break;
+			default:
+				break;
+		}
+
+	return;
+}
+
+static void draw_block(const screen_t *screen, int start_y, int start_x,const block_t *block)
+{
+	const screen_t *scr=screen;
+	const block_t *bck=block;
+	int y,x;
+	if(NULL==scr){
+		return ;
+	}
+	open_colors(bck->type);
+	for(y=start_y; y<start_y+GRID_LEN; y++){
+		for(x=start_x; x<start_x+GRID_LEN; x++){
+			if(bck->blck[(y-start_y)*GRID_LEN+(x-start_x)]=='1'&&(y>scr->begin_y)){
+				mvwaddch(scr->win,y,x,PAINT_BLOCK_UNIT);
+			}
+		}
+	}
+	close_colors(bck->type);
+	
+	wrefresh(scr->win);
+	
+	return ;
 }
 
 static void draw_current_block(const screen_t *screen,const block_t *block)
@@ -175,28 +265,11 @@ static void draw_current_block(const screen_t *screen,const block_t *block)
 	if(NULL==scr||NULL==bck){
 		return;	
 	}
-	
-	//just for test
-	if(has_colors()){attron(COLOR_PAIR(COLOR_TEST));}
-	for(y=scr->begin_y+bck->y; y<scr->begin_y+bck->y+GRID_LEN; y++){
-		for(x=scr->begin_x+bck->x; x<scr->begin_x+bck->x+GRID_LEN; x++){
-			if(bck->blck[(y-scr->begin_y-bck->y)*GRID_LEN+(x-scr->begin_x-bck->x)]=='1'){
-				mvwaddch(scr->win,y,x,PAINT_BLOCK_UNIT);
-			}else{
-			//just for test
-				mvwaddch(scr->win,y,x,' ');
-			}
-		}
-	}
-	//just for test
-	mvwprintw(scr->win,y+2,1,"%s:%d-%d",__func__,bck->type,bck->number);
-	block_t tmp;
-	get_next_rotate_block(&tmp,bck);
-	mvwprintw(scr->win,y+3,1,"%s:%d-%d",__func__,tmp.type,tmp.number);
-	mvwprintw(scr->win,1,1,"%s:%d-%d",__func__,tmp.y,tmp.x);
-	
-	if(has_colors()){attroff(COLOR_PAIR(COLOR_TEST));}
-	wrefresh(scr->win);
+
+	y=scr->begin_y+bck->y;
+	x=scr->begin_x+bck->x;
+
+	draw_block(scr,y,x,bck);
 	
 	return;
 }
@@ -205,7 +278,6 @@ static void draw_next_block(const screen_t *screen,block_t *block)
 {
 	const screen_t *scr=screen;
 	block_t *bck=block;
-	int y,x;
 	if(NULL==scr||NULL==bck){
 		return;
 	}
@@ -213,19 +285,7 @@ static void draw_next_block(const screen_t *screen,block_t *block)
 	bck->y=scr->begin_y+POS_NEXT_BLOCK_Y;
 	bck->x=scr->begin_x+POS_NEXT_BLOCK_X;
 
-	if(has_colors()){attron(COLOR_PAIR(COLOR_TEST));}
-	for(y=bck->y; y<bck->y+GRID_LEN; y++){
-		for(x=bck->x; x<bck->x+GRID_LEN; x++){
-			if(bck->blck[(y-bck->y)*GRID_LEN+(x-bck->x)]=='1'){
-				mvwaddch(scr->win,y,x,PAINT_BLOCK_UNIT);
-			}else{
-			//just for test
-				mvwaddch(scr->win,y,x,' ');
-			}
-		}
-	}
-	if(has_colors()){attroff(COLOR_PAIR(COLOR_TEST));}
-	wrefresh(scr->win);
-	
+	draw_block(scr,bck->y,bck->x,bck);
+
 	return;
 }
