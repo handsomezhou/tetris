@@ -180,6 +180,7 @@ void exit_tetris(tetris_t *tetris)
 	pthread_mutex_destroy(&mutex);
 	exit_prompt(&ttrs->prompt);
 	exit_screen(&ttrs->scr);
+	free(ttrs);
 	
 	return;
 }
