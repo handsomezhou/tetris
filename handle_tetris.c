@@ -603,7 +603,7 @@ static int remove_layer(grid_t (*pgrid)[TETRIS_WIDTH], const block_t *block, int
 	
 	y=bck->y-1;
 	if(((y+0)<TETRIS_HEIGHT)&&(((layer_num>>0)&1)==1)){
-		remove_layer_from_grid(pg,y+1);
+		remove_layer_from_grid(pg,y+0);
 	}
 
 	if(((y+1)<TETRIS_HEIGHT)&&(((layer_num>>1)&1)==1)){
@@ -956,6 +956,7 @@ int deal_key_event(grid_t (*pgrid)[TETRIS_WIDTH],block_t *block, status_t *statu
 	block_t *bck=block;
 	status_t *sts=status;
 	status_t sts_tmp;
+	int fall=GRID_LEN;
 	if(NULL==pg||NULL==bck||NULL==sts){
 		return TTRS_FAILED;
 	}
@@ -993,7 +994,12 @@ int deal_key_event(grid_t (*pgrid)[TETRIS_WIDTH],block_t *block, status_t *statu
 		case 'k':
 			if(STATUS_PAUSE!=*sts){
 				pthread_mutex_lock(&mutex);
-				move_block(pg,bck,DIR_DOWN);
+				do{
+					if(NULL==move_block(pg,bck,DIR_DOWN)){
+						break;
+					}
+					fall--;
+				}while(fall>0);
 				pthread_mutex_unlock(&mutex);
 			}
 			
